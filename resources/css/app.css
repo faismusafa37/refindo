@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind variants;
+
+.fi-simple-main-ctn {
+    background-image: url('/assets/images/excavator.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
