@@ -18,7 +18,6 @@ return new class extends Migration
             // Kolom baru untuk activity
             $table->string('no_unit_tiket');
             $table->text('job_description');
-            $table->text('hour_meter');
             $table->text('task_description');
             $table->string('category_issues');
             $table->string('priority');
@@ -38,10 +37,10 @@ return new class extends Migration
             $table->integer('final_stock')->default(0);
 
             // Upload fields
-            $table->string('photo_1')->nullable();
-            $table->string('photo_2')->nullable();
-            $table->string('photo_3')->nullable();
-            $table->string('bast_document')->nullable();
+            // $table->string('photo_1')->nullable();
+            // $table->string('photo_2')->nullable();
+            // $table->string('photo_3')->nullable();
+            // $table->string('bast_document')->nullable();
 
             // Relasi user
             $table->unsignedBigInteger('user_id');

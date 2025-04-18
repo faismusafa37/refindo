@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('photo_2')->nullable();
             $table->string('photo_3')->nullable();
             $table->string('bast_document')->nullable(); // Dokumen BAST
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Relasi ke user
             $table->timestamps();
         });
     }
