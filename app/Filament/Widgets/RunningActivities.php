@@ -11,7 +11,7 @@ class RunningActivities extends ChartWidget
 
     protected function getType(): string
     {
-        return 'pie'; // Ganti jadi pie chart
+        return 'pie'; // Pie chart
     }
 
     protected function getOptions(): array
@@ -29,24 +29,46 @@ class RunningActivities extends ChartWidget
 
     protected function getData(): array
     {
-        $data = Activity::selectRaw("status, COUNT(*) as count")
-            ->whereIn('status', ['RFU', 'in-progress', 'completed', 'waiting-for-parts'])
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
+        // Ambil jumlah aktivitas berdasarkan status yang ada, dengan menggunakan like
+        $data = [
+            'RFU' => Activity::where('status', 'like', '%RFU%')->count(),
+            'on going' => Activity::where('status', 'like', '%on going%')->count(),
+            'selesai' => Activity::where('status', 'like', '%selesai%')->count(),
+        ];
+
+        // Menyesuaikan label dan warna berdasarkan status yang ada
+        $labels = [];
+        $dataValues = [];
+        $backgroundColors = [];
+
+        // Keterangan status yang lebih ringkas
+        $statusLabels = [
+            'RFU' => 'Aktivitas yang Terdaftar',
+            'on going' => 'On Going',
+            'selesai' => 'Finish'
+        ];
+
+        // Warna untuk tiap status
+        $colors = [
+            'RFU' => '#FFCE56', // Kuning
+            'on going' => '#36A2EB', // Biru
+            'selesai' => '#4CAF50', // Hijau
+        ];
+
+        // Proses data untuk chart
+        foreach ($statusLabels as $key => $label) {
+            $labels[] = $label;
+            $dataValues[] = $data[$key] ?? 0; // Jika tidak ada data, set 0
+            $backgroundColors[] = $colors[$key];
+        }
 
         return [
-            'labels' => ['RFU', 'In Progress', 'Completed', 'Waiting for Parts'],
+            'labels' => $labels,
             'datasets' => [
                 [
                     'label' => 'Jumlah Aktivitas',
-                    'data' => [
-                        $data['RFU'] ?? 0,
-                        $data['in-progress'] ?? 0,
-                        $data['completed'] ?? 0,
-                        $data['waiting-for-parts'] ?? 0,
-                    ],
-                    'backgroundColor' => ['#FFCE56', '#36A2EB', '#4CAF50', '#FF6384'],
+                    'data' => $dataValues,
+                    'backgroundColor' => $backgroundColors,
                 ],
             ],
         ];

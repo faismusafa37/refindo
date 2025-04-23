@@ -16,6 +16,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use App\Filament\Resources\AnggaranResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -43,6 +44,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\ActivityChart::class,
                 \App\Filament\Widgets\BudgetAbsorptionStats::class,
                 \App\Filament\Widgets\RFUCompletedStats::class,
+                \App\Filament\Widgets\BudgetStats::class,
                 \App\Filament\Widgets\RunningActivities::class,
                 \App\Filament\Widgets\StockOpnameView::class,
                 

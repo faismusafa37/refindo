@@ -40,17 +40,32 @@ class StockOpnameResource extends Resource
                 Forms\Components\TextInput::make('stock_in')
                     ->label('Stock In')
                     ->numeric()
-                    ->required(),
+                    ->required()
+                    ->afterStateUpdated(function (callable $set, $state, $get) {
+                        // Ambil nilai stock_out dari state form dan hitung final_stock
+                        $stockOut = $get('stock_out') ?? 0;
+                        // Menghitung final_stock setelah perubahan
+                        $set('final_stock', ($state ?? 0) - $stockOut);
+                    }),
 
                 Forms\Components\TextInput::make('stock_out')
                     ->label('Stock Out')
                     ->numeric()
-                    ->required(),
+                    ->required()
+                    ->afterStateUpdated(function (callable $set, $state, $get) {
+                        // Ambil nilai stock_in dari state form dan hitung final_stock
+                        $stockIn = $get('stock_in') ?? 0;
+                        // Menghitung final_stock setelah perubahan
+                        $set('final_stock', $stockIn - ($state ?? 0));
+                    }),
 
-                Forms\Components\TextInput::make('final_stock')
+                    Forms\Components\TextInput::make('final_stock')
                     ->label('Final Stock')
                     ->numeric()
-                    ->required(),
+                    ->disabled()
+                    ->dehydrated(false) // ini penting supaya nilai 0-nya gak ditimpa
+                    ->default(0),
+                
 
                 Forms\Components\Textarea::make('description')
                     ->label('Description')
@@ -87,7 +102,17 @@ class StockOpnameResource extends Resource
 
                 Tables\Columns\TextColumn::make('final_stock')
                     ->label('Final Stock')
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(function ($state) {
+                        // Pastikan final_stock tampil dengan nilai yang benar
+                        return $state ?? 0;
+                    }),
+                
+                Tables\Columns\TextColumn::make('description')
+                    ->label('Description')
+                    ->limit(50)
+                    ->wrap()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('User')

@@ -13,6 +13,7 @@ class StockOpname extends Model
     protected $fillable = [
         'part_number',
         'part_name',
+        'description',
         'stock_in',
         'stock_out',
         'final_stock',

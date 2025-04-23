@@ -11,13 +11,24 @@ class RFUCompletedStats extends BaseWidget
     protected function getCards(): array
     {
         return [
-            Card::make('Total RFU', Activity::whereLike('status', '%rf%')->count())
-            ->description('Aktivitas menunggu tindakan')
-            ->color('warning'),
+            Card::make('Total Activities', Activity::where('status','like','%RFU%')->count())
+                ->description('Jumlah seluruh aktivitas yang terdaftar')
+                ->color('primary')
+                ->url(route('filament.admin.resources.activities.index')),
 
-            Card::make('Sudah Selesai', Activity::whereLike('status', '%complet%')->count())
-            ->description('RFU yang sudah selesai dan aktivitas lainnya')
-            ->color('success'),
+            Card::make('On Going', Activity::where('status', 'like', '%on going%')->count())
+                ->description('Aktivitas yang sedang berjalan')
+                ->color('warning')
+                ->url(route('filament.admin.resources.activities.index', [
+                    'tableFilters[status][value]' => 'ongoing'
+                ])),
+
+            Card::make('Selesai', Activity::where('status', 'like', '%selesai%')->count())
+                ->description('Aktivitas yang sudah selesai')
+                ->color('success') // Warna hijau
+                ->url(route('filament.admin.resources.activities.index', [
+                    'tableFilters[status][value]' => 'complet'
+                ]))
 
         ];
     }

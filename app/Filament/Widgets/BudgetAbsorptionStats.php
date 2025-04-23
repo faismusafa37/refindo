@@ -2,32 +2,50 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Anggaran;
+use App\Models\Activity;
 use Filament\Widgets\StatsOverviewWidget\Card;
 use Filament\Widgets\StatsOverviewWidget;
-use App\Models\Activity;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Facades\Auth;
 
 class BudgetAbsorptionStats extends StatsOverviewWidget
 {
+    use InteractsWithPageFilters;
+
+    protected static bool $isLazy = false;
+    protected static ?int $sort  = -1;
+
     protected function getCards(): array
     {
-        $totalBudget = Activity::sum('budget'); // misal ada kolom 'budget'
-        $totalUsed = Activity::sum('price');    // biaya yang diserap
+        $user    = Auth::user();
+        $isAdmin = $user->hasRole('admin');
+        $userProjectId = $user->project_id;
 
-        $remaining = $totalBudget - $totalUsed;
+        // Ambil nilai filter project_id jika admin, atau pakai project_id user
+        $filteredProject = $this->filters['project_id'] ?? null;
+        $projectId = $isAdmin
+            ? ($filteredProject ?? $userProjectId)
+            : $userProjectId;
+
+        // Hitung data
+        $totalBudget = Anggaran::where('project_id', $projectId)->sum('current_amount');
+        $totalUsed   = Activity::where('project_id',  $projectId)->sum('price');
+        $remaining   = $totalBudget - $totalUsed;
 
         return [
-            Card::make('Dari Anggaran', number_format($totalBudget))
-                ->description('Total anggaran yang tersedia')
+            Card::make('Total Anggaran', 'Rp ' . number_format($totalBudget, 0, ',', '.'))
+                ->description('Jumlah anggaran tersedia')
                 ->descriptionIcon('heroicon-o-banknotes')
                 ->color('primary'),
 
-            Card::make('Penyerapan Anggaran', number_format($totalUsed))
+            Card::make('Penyerapan Anggaran', 'Rp ' . number_format($totalUsed, 0, ',', '.'))
                 ->description('Biaya yang sudah terserap')
                 ->descriptionIcon('heroicon-o-chart-bar')
                 ->color('success'),
 
-            Card::make('Sisa Anggaran', number_format($remaining))
-                ->description('Sisa yang belum diserap')
+            Card::make('Sisa Anggaran', 'Rp ' . number_format($remaining, 0, ',', '.'))
+                ->description('Anggaran yang tersisa')
                 ->descriptionIcon('heroicon-o-currency-dollar')
                 ->color('warning'),
         ];

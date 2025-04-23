@@ -21,6 +21,7 @@ class Activity extends Model
         'time_out',
         'status',
         'price',
+        'project_id', 
         'part_number',
         'part_name',
         'part_description',
@@ -33,11 +34,26 @@ class Activity extends Model
         'photo_3',
         'bast_document',
         'user_id',
+        'total_price', 
     ];
 
-    // Definisi relasi ke tabel users
+    // Relasi ke user
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Relasi ke project
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    // Hitung total_price secara otomatis saat menyimpan
+    protected static function booted()
+    {
+        static::saving(function ($activity) {
+            $activity->total_price = ($activity->price ?? 0) + ($activity->price_stock ?? 0);
+        });
     }
 }

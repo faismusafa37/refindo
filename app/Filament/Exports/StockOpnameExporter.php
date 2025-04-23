@@ -14,10 +14,10 @@ class StockOpnameExporter extends Exporter
         return [
             ExportColumn::make('part_number')->label('Part Number'),
             ExportColumn::make('part_name')->label('Part Name'),
+            ExportColumn::make('description')->label('Description'),
             ExportColumn::make('stock_in')->label('Stock In'),
             ExportColumn::make('stock_out')->label('Stock Out'),
             ExportColumn::make('final_stock')->label('Final Stock'),
-            ExportColumn::make('description')->label('Description'),
             ExportColumn::make('user.name')->label('User'),
             ExportColumn::make('created_at')->label('Created At'), // Tidak ada format di sini
         ];

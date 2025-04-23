@@ -16,4 +16,15 @@ class EditStockOpname extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['final_stock'] = ($data['stock_in'] ?? 0) - ($data['stock_out'] ?? 0);
+        return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return static::getResource()::getUrl('index');
+    }
 }
