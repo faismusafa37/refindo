@@ -47,10 +47,6 @@ class PartDismantleResource extends Resource
                 ->required()
                 ->maxLength(255),
 
-            Forms\Components\Textarea::make('desc')
-                ->label('Desc')
-                ->rows(3)
-                ->maxLength(1000),
         ]);
     }
 
@@ -63,7 +59,6 @@ class PartDismantleResource extends Resource
             Tables\Columns\TextColumn::make('description')->label('Description'),
             Tables\Columns\TextColumn::make('stock_dismantle')->label('Stock Dismantle'),
             Tables\Columns\TextColumn::make('no_tiket')->label('No. Tiket'),
-            Tables\Columns\TextColumn::make('desc')->label('Desc'),
         ])
         ->headerActions([
             ExportAction::make()
