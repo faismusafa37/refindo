@@ -26,11 +26,10 @@ class UserResource extends Resource
     protected static ?string $navigationGroup = 'Access Management';
     protected static ?string $navigationLabel = 'User Management';
 
-    public static function shouldRegisterNavigation(): bool
+    public static function canAccess(): bool
     {
-        $user = auth()->user();
-    
-        return $user && $user->hasRole('Admin');
+        // Biar DLH gak bisa akses User Management
+        return Auth::user()?->hasRole('admin');
     }
 
     public static function form(Form $form): Form

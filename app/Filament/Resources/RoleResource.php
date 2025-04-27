@@ -6,6 +6,7 @@ use App\Filament\Resources\RoleResource\Pages;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
 
 class RoleResource extends Resource
@@ -15,6 +16,12 @@ class RoleResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $navigationLabel = 'Roles';
     protected static ?string $navigationGroup = 'Access Management';
+    
+    public static function canAccess(): bool
+    {
+        // Biar DLH gak bisa akses User Management
+        return Auth::user()?->hasRole('admin');
+    }
 
     public static function form(Forms\Form $form): Forms\Form
     {
