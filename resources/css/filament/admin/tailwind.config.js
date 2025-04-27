@@ -7,13 +7,4 @@ export default {
         './resources/views/filament/**/*.blade.php',
         './vendor/filament/**/*.blade.php',
     ],
-    safelist: [
-        'fi-simple-main-ctn',
-    ],
-    theme: {
-        extend: {
-            // Kalau mau custom warna, font, dsb bisa tambahin di sini
-        },
-    },
-    plugins: [],
 }

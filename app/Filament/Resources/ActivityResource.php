@@ -29,48 +29,16 @@ class ActivityResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Data Pekerjaan')
                     ->schema([
-                        
-                        Forms\Components\TextInput::make('no_unit_tiket')
-                        ->label('No Unit/Tiket')
-                        ->required(),
-                        
-                        Forms\Components\TextInput::make('job_description')
-                        ->label('Job Description')
-                        ->required(),
-                        
-                        Forms\Components\Textarea::make('task_description')
-                        ->label('Task Description')
-                        ->required(),
-                        
-                        Forms\Components\TextInput::make('category_issues')
-                        ->label('Category Issues')
-                        ->required(),
-                        
-                        Forms\Components\TextInput::make('priority')
-                        ->label('Priority')
-                        ->required(),
-                        
-                        Forms\Components\TextInput::make('pic_assignee')
-                        ->label('PIC Assignee')
-                        ->required(),
-                        
-                        Forms\Components\DateTimePicker::make('time_in')
-                        ->label('Time In')
-                        ->required(),
-                        
-                        Forms\Components\DateTimePicker::make('time_out')
-                        ->label('Time Out')
-                        ->required(),
-                        
-                        Forms\Components\TextInput::make('hour_meter')
-                        ->label('Hour Meter (KM Mobil)')
-                        ->numeric()
-                        ->required(),
-                        
-                        Forms\Components\TextInput::make('status')
-                        ->label('Status')
-                        ->required(),
-                        
+                        Forms\Components\TextInput::make('no_unit_tiket')->label('No Unit/Tiket')->required(),
+                        Forms\Components\TextInput::make('job_description')->label('Job Description')->required(),
+                        Forms\Components\Textarea::make('task_description')->label('Task Description')->required(),
+                        Forms\Components\TextInput::make('category_issues')->label('Category Issues')->required(),
+                        Forms\Components\TextInput::make('priority')->label('Priority')->required(),
+                        Forms\Components\TextInput::make('pic_assignee')->label('PIC Assignee')->required(),
+                        Forms\Components\DateTimePicker::make('time_in')->label('Time In')->required(),
+                        Forms\Components\DateTimePicker::make('time_out')->label('Time Out')->required(),
+                        Forms\Components\TextInput::make('hour_meter')->label('Hour Meter (KM Mobil)')->numeric()->required(),
+                        Forms\Components\TextInput::make('status')->label('Status')->required(),
                         Forms\Components\TextInput::make('price')
                             ->label('Price')
                             ->numeric()
@@ -80,29 +48,20 @@ class ActivityResource extends Resource
                             ->afterStateUpdated(fn ($state, callable $set, callable $get) =>
                                 $set('total_price', ($state ?? 0) + ($get('price_stock') ?? 0))
                             ),
-                        Forms\Components\Select::make('project_idphp ')
+                        Forms\Components\Select::make('project_id')
                             ->label('Project')
                             ->relationship('project', 'name')
                             ->required()
                             ->searchable()
                             ->preload(),
-                            
                     ])
                     ->columns(2),
 
-                    Forms\Components\Section::make('Data Stock')
+                Forms\Components\Section::make('Data Stock')
                     ->schema([
-                        Forms\Components\TextInput::make('part_number')
-                            ->label('Part Number')
-                            ->required(),
-                
-                        Forms\Components\TextInput::make('part_name')
-                            ->label('Part Name')
-                            ->required(),
-                
-                        Forms\Components\Textarea::make('part_description')
-                            ->label('Part Description'),
-                
+                        Forms\Components\TextInput::make('part_number')->label('Part Number')->required(),
+                        Forms\Components\TextInput::make('part_name')->label('Part Name')->required(),
+                        Forms\Components\Textarea::make('part_description')->label('Part Description'),
                         Forms\Components\TextInput::make('stock_in')
                             ->label('Stock In')
                             ->numeric()
@@ -112,7 +71,6 @@ class ActivityResource extends Resource
                                 $stockOut = $get('stock_out') ?? 0;
                                 $set('final_stock', ($state ?? 0) - $stockOut);
                             }),
-                
                         Forms\Components\TextInput::make('stock_out')
                             ->label('Stock Out')
                             ->numeric()
@@ -122,7 +80,6 @@ class ActivityResource extends Resource
                                 $stockIn = $get('stock_in') ?? 0;
                                 $set('final_stock', $stockIn - ($state ?? 0));
                             }),
-                
                         Forms\Components\TextInput::make('price_stock')
                             ->label('Price Stock')
                             ->numeric()
@@ -132,14 +89,12 @@ class ActivityResource extends Resource
                             ->afterStateUpdated(fn ($state, callable $set, callable $get) =>
                                 $set('total_price', ($state ?? 0) + ($get('price') ?? 0))
                             ),
-                
                         Forms\Components\TextInput::make('final_stock')
                             ->label('Final Stock')
                             ->numeric()
                             ->required()
                             ->disabled()
                             ->dehydrated(false),
-                
                         Forms\Components\TextInput::make('total_price')
                             ->label('Total Price')
                             ->numeric()
@@ -227,7 +182,9 @@ class ActivityResource extends Resource
                 Tables\Columns\TextColumn::make('part_name')->label('Part Name')->sortable(),
                 Tables\Columns\TextColumn::make('stock_in')->label('Stock In')->sortable(),
                 Tables\Columns\TextColumn::make('stock_out')->label('Stock Out')->sortable(),
-                Tables\Columns\TextColumn::make('final_stock')->label('Final Stock')->sortable()->getStateUsing(function ($record) {return ($record->stock_in ?? 0) - ($record->stock_out ?? 0);}),
+                Tables\Columns\TextColumn::make('final_stock')->label('Final Stock')->sortable()->getStateUsing(function ($record) {
+                    return ($record->stock_in ?? 0) - ($record->stock_out ?? 0);
+                }),
 
                 Tables\Columns\ImageColumn::make('photo_1')->label('Foto Before')
                     ->url(fn ($record) => $record->photo_1 ? asset('storage/' . $record->photo_1) : null)
@@ -256,7 +213,8 @@ class ActivityResource extends Resource
             ])
             ->filters([])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                ->visible(fn () => !Auth::user()->hasRole('DLH')),
             ])
             ->headerActions([
                 ExportAction::make()
@@ -265,9 +223,41 @@ class ActivityResource extends Resource
                     ->exporter(ActivityExporter::class),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()
+                ->visible(fn () => Auth::user()->hasRole('Admin')),
             ]);
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (Auth::user()->hasRole('User') || Auth::user()->hasRole('DLH')) {
+            $projectId = Auth::user()->project_id;
+            if ($projectId) {
+                $query->where('project_id', $projectId);
+            } else {
+                $query->whereNull('id'); // kalau gak ada project_id, ga nampilin apa-apa
+            }
+        }
+
+        return $query;
+    }
+
+    public static function canCreate(): bool
+{
+    return !Auth::user()->hasRole('User');
+}
+
+public static function canEdit($record): bool
+{
+    return !Auth::user()->hasRole('User');
+}
+
+public static function canDelete($record): bool
+{
+    return Auth::user()->hasRole('Admin');
+}
 
     public static function getPages(): array
     {
@@ -277,5 +267,4 @@ class ActivityResource extends Resource
             'edit' => Pages\EditActivity::route('/{record}/edit'),
         ];
     }
-    
 }

@@ -11,7 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\ExportAction;
-use App\Filament\Exports\StockOpnameExporter; // Import StockOpnameExporter
+use App\Filament\Exports\StockOpnameExporter;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Hidden;
 
@@ -22,6 +22,12 @@ class StockOpnameResource extends Resource
     protected static ?string $navigationGroup = 'Inventory Management';
     protected static ?string $navigationLabel = 'Stock Opname';
     protected static ?string $pluralLabel = 'Stock Opname';
+
+    public static function canAccess(): bool
+    {
+        // Resource ini disembunyikan untuk role DLH
+        return !Auth::user()?->hasRole('DLH');
+    }
 
     public static function form(Form $form): Form
     {
@@ -42,9 +48,7 @@ class StockOpnameResource extends Resource
                     ->numeric()
                     ->required()
                     ->afterStateUpdated(function (callable $set, $state, $get) {
-                        // Ambil nilai stock_out dari state form dan hitung final_stock
                         $stockOut = $get('stock_out') ?? 0;
-                        // Menghitung final_stock setelah perubahan
                         $set('final_stock', ($state ?? 0) - $stockOut);
                     }),
 
@@ -53,28 +57,24 @@ class StockOpnameResource extends Resource
                     ->numeric()
                     ->required()
                     ->afterStateUpdated(function (callable $set, $state, $get) {
-                        // Ambil nilai stock_in dari state form dan hitung final_stock
                         $stockIn = $get('stock_in') ?? 0;
-                        // Menghitung final_stock setelah perubahan
                         $set('final_stock', $stockIn - ($state ?? 0));
                     }),
 
-                    Forms\Components\TextInput::make('final_stock')
+                Forms\Components\TextInput::make('final_stock')
                     ->label('Final Stock')
                     ->numeric()
                     ->disabled()
-                    ->dehydrated(false) // ini penting supaya nilai 0-nya gak ditimpa
+                    ->dehydrated(false)
                     ->default(0),
-                
 
                 Forms\Components\Textarea::make('description')
                     ->label('Description')
                     ->maxLength(500),
 
-                // Komponen Hidden untuk otomatis mengisi user_id
                 Hidden::make('user_id')
                     ->default(fn () => Auth::check() ? Auth::id() : null)
-                    ->required(), // Jika perlu di-set sebagai required
+                    ->required(),
             ]);
     }
 
@@ -104,7 +104,6 @@ class StockOpnameResource extends Resource
                     ->label('Final Stock')
                     ->sortable()
                     ->formatStateUsing(function ($state) {
-                        // Pastikan final_stock tampil dengan nilai yang benar
                         return $state ?? 0;
                     }),
                 
@@ -126,11 +125,13 @@ class StockOpnameResource extends Resource
             ])
             ->headerActions([
                 ExportAction::make()
-                    ->exporter(StockOpnameExporter::class) // Set exporter class
+                    ->exporter(StockOpnameExporter::class)
                     ->label('Export CSV')
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->filters([/* Tambahkan filter jika diperlukan */])
+            ->filters([
+                // Tambahkan filter kalau mau
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

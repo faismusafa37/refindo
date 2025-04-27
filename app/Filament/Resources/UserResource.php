@@ -12,8 +12,11 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Section;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Illuminate\Support\Facades\Auth;
 
 class UserResource extends Resource
 {
@@ -23,6 +26,12 @@ class UserResource extends Resource
     protected static ?string $navigationGroup = 'Access Management';
     protected static ?string $navigationLabel = 'User Management';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+    
+        return $user && $user->hasRole('Admin');
+    }
 
     public static function form(Form $form): Form
     {
@@ -47,19 +56,22 @@ class UserResource extends Resource
                             ->label('Password'),
                     ]),
 
-                Section::make('Role & Permissions')
+                Section::make('Roles')
                     ->schema([
                         Select::make('roles')
                             ->relationship('roles', 'name')
                             ->preload()
                             ->multiple()
-                            ->label('Roles'),
+                            ->label('Assign Role(s)')
+                            ->required(),
                     ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
+        $user = auth()->user();
+
         return $table
             ->columns([
                 TextColumn::make('name')
@@ -75,17 +87,14 @@ class UserResource extends Resource
                     ->badge()
                     ->sortable(),
             ])
-            ->filters([
-                //
-            ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->bulkActions(
+                $user->hasRole('Admin') ? [
+                    DeleteBulkAction::make(),
+                ] : []
+            );
     }
 
     public static function getRelations(): array

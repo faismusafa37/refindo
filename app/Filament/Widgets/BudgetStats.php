@@ -17,39 +17,27 @@ class BudgetStats extends TableWidget
     protected int|string|array $columnSpan = 'full';
     protected static ?string $heading = 'Anggaran Tahun';
 
-    // Fungsi untuk mendapatkan query data
+    // Mengatur visibilitas widget berdasarkan role
+    public static function canView(): bool
+    {
+        // Hanya Admin dan User yang bisa melihat, DLH tidak bisa
+        return ! Auth::user()->hasRole('DLH') && Auth::user()->can('view anggaran');
+    }
+
+    // Mendapatkan query untuk tabel berdasarkan project yang terkait
     public function getTableQuery(): Builder
     {
         $query = Anggaran::query()->with('project');
 
-        // Filter untuk user biasa
-        if (!Auth::user()->hasRole('admin')) {
+        // Jika bukan Admin, hanya data project terkait user yang akan ditampilkan
+        if (! Auth::user()->hasRole('admin')) {
             $query->where('project_id', Auth::user()->project_id);
         }
-
-        // Ambil filter yang diterapkan oleh user
-        // $tahun = request()->input('filters.tahun');
-        // $bulan = request()->input('filters.bulan');
-        // $project_id = request()->input('filters.project_id');
-        // \Log::info('project', [$project_id]);
-        // // Filter berdasarkan tahun
-        // if ($tahun) {
-        //     $query->whereYear('updated_at', $tahun);
-        // }
-
-        // // Filter berdasarkan bulan
-        // if ($bulan) {
-        //     $query->whereMonth('updated_at', $bulan);
-        // }
-
-        // // Filter berdasarkan project_id, hanya admin yang bisa memilih project
-        // if ($project_id) {
-        //     $query->where('project_id', $project_id);
-        // }
 
         return $query;
     }
 
+    // Menentukan kolom-kolom yang ditampilkan di tabel
     protected function getTableColumns(): array
     {
         return [
@@ -67,47 +55,51 @@ class BudgetStats extends TableWidget
         ];
     }
 
+    // Menentukan filter-filter yang ditampilkan di tabel
     protected function getTableFilters(): array
-{
-    return [
-        // Filter gabungan "Dibuat Pada" (Tahun dan Bulan)
-        Filter::make('created_at')
-            ->label('Dibuat Pada')
-            ->form([
-                Select::make('year')
-                    ->label('Tahun')
-                    ->options(
-                        collect(range(now()->year, now()->year - 5))
-                            ->mapWithKeys(fn ($y) => [$y => $y])
-                            ->toArray()
-                    ),
+    {
+        $user = Auth::user();
 
-                Select::make('month')
-                    ->label('Bulan')
-                    ->options([
-                        '1' => 'Januari', '2' => 'Februari', '3' => 'Maret',
-                        '4' => 'April', '5' => 'Mei', '6' => 'Juni',
-                        '7' => 'Juli', '8' => 'Agustus', '9' => 'September',
-                        '10' => 'Oktober', '11' => 'November', '12' => 'Desember',
-                    ]),
-            ])
-            ->query(function (Builder $query, array $data) {
-                if (!empty($data['year'])) {
-                    $query->whereYear('updated_at', $data['year']);
-                }
+        return [
+            // Filter gabungan "Dibuat Pada" (Tahun dan Bulan)
+            Filter::make('created_at')
+                ->label('Dibuat Pada')
+                ->form([
+                    Select::make('year')
+                        ->label('Tahun')
+                        ->options(
+                            collect(range(now()->year, now()->year - 5))
+                                ->mapWithKeys(fn ($y) => [$y => $y])
+                                ->toArray()
+                        ),
 
-                if (!empty($data['month'])) {
-                    $query->whereMonth('updated_at', $data['month']);
-                }
+                    Select::make('month')
+                        ->label('Bulan')
+                        ->options([
+                            '1' => 'Januari', '2' => 'Februari', '3' => 'Maret',
+                            '4' => 'April', '5' => 'Mei', '6' => 'Juni',
+                            '7' => 'Juli', '8' => 'Agustus', '9' => 'September',
+                            '10' => 'Oktober', '11' => 'November', '12' => 'Desember',
+                        ]),
+                ])
+                ->query(function (Builder $query, array $data) {
+                    if (!empty($data['year'])) {
+                        $query->whereYear('updated_at', $data['year']);
+                    }
 
-                return $query;
-            }),
+                    if (!empty($data['month'])) {
+                        $query->whereMonth('updated_at', $data['month']);
+                    }
 
-        // Filter project_id cuma untuk admin
-        SelectFilter::make('project_id')
-            ->label('Wilayah / Project')
-            ->options(Project::pluck('name', 'id'))
-            ->hidden(!Auth::user()->hasRole('admin')),
-    ];
-}
+                    return $query;
+                }),
+
+            // Filter project_id untuk Admin dan User
+            SelectFilter::make('project_id')
+                ->label('Wilayah / Project')
+                ->options(Project::pluck('name', 'id'))
+                // Menampilkan filter project_id hanya untuk Admin dan User
+                ->hidden(! $user->hasRole('admin') && ! $user->hasRole('user')),
+        ];
+    }
 }

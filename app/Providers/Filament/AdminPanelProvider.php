@@ -9,6 +9,8 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages\Auth\Login;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Swis\Filament\Backgrounds\FilamentBackgroundsPlugin;
+use Swis\Filament\Backgrounds\ImageProviders\MyImages;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -18,6 +20,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use App\Filament\Resources\AnggaranResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Filament\CustomBackgroundPlugin;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -28,8 +32,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
+            ->brandName('Refindo')
             ->brandLogo(asset('assets/images/logo_Refindo.png'))
             ->brandLogoHeight('50px')
+            ->favicon(asset('assets/images/refindo.ico'))
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -46,9 +52,9 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\RFUCompletedStats::class,
                 \App\Filament\Widgets\BudgetStats::class,
                 \App\Filament\Widgets\RunningActivities::class,
-                \App\Filament\Widgets\StockOpnameView::class,
-                
+                \App\Filament\Widgets\StockOpnameView::class,           
             ])
+            
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -66,6 +72,12 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
+                FilamentBackgroundsPlugin::make()
+                ->imageProvider(
+                    MyImages::make()
+                        ->directory('images')
+                ),
+            
             ]);
     }
 }

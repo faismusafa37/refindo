@@ -17,37 +17,39 @@ class BudgetAbsorptionStats extends StatsOverviewWidget
     protected static ?int $sort  = -1;
 
     protected function getCards(): array
-    {
-        $user    = Auth::user();
-        $isAdmin = $user->hasRole('admin');
-        $userProjectId = $user->project_id;
+{
+    $user = Auth::user();
 
-        // Ambil nilai filter project_id jika admin, atau pakai project_id user
-        $filteredProject = $this->filters['project_id'] ?? null;
-        $projectId = $isAdmin
-            ? ($filteredProject ?? $userProjectId)
-            : $userProjectId;
-
-        // Hitung data
-        $totalBudget = Anggaran::where('project_id', $projectId)->sum('current_amount');
-        $totalUsed   = Activity::where('project_id',  $projectId)->sum('price');
-        $remaining   = $totalBudget - $totalUsed;
-
-        return [
-            Card::make('Total Anggaran', 'Rp ' . number_format($totalBudget, 0, ',', '.'))
-                ->description('Jumlah anggaran tersedia')
-                ->descriptionIcon('heroicon-o-banknotes')
-                ->color('primary'),
-
-            Card::make('Penyerapan Anggaran', 'Rp ' . number_format($totalUsed, 0, ',', '.'))
-                ->description('Biaya yang sudah terserap')
-                ->descriptionIcon('heroicon-o-chart-bar')
-                ->color('success'),
-
-            Card::make('Sisa Anggaran', 'Rp ' . number_format($remaining, 0, ',', '.'))
-                ->description('Anggaran yang tersisa')
-                ->descriptionIcon('heroicon-o-currency-dollar')
-                ->color('warning'),
-        ];
+    // Kalau DLH, jangan tampilkan widget
+    if ($user->hasRole('DLH')) {
+        return [];
     }
+
+    $userProjectId = $user->project_id;
+
+    // Semua selain DLH (Admin & User) bisa pakai filter
+    $projectId = $this->filters['project_id'] ?? $userProjectId;
+
+    $totalBudget = Anggaran::where('project_id', $projectId)->sum('current_amount');
+    $totalUsed   = Activity::where('project_id', $projectId)->sum('price');
+    $remaining   = $totalBudget - $totalUsed;
+
+    return [
+        Card::make('Total Anggaran', 'Rp ' . number_format($totalBudget, 0, ',', '.'))
+            ->description('Jumlah anggaran tersedia')
+            ->descriptionIcon('heroicon-o-banknotes')
+            ->color('primary'),
+
+        Card::make('Penyerapan Anggaran', 'Rp ' . number_format($totalUsed, 0, ',', '.'))
+            ->description('Biaya yang sudah terserap')
+            ->descriptionIcon('heroicon-o-chart-bar')
+            ->color('success'),
+
+        Card::make('Sisa Anggaran', 'Rp ' . number_format($remaining, 0, ',', '.'))
+            ->description('Anggaran yang tersisa')
+            ->descriptionIcon('heroicon-o-currency-dollar')
+            ->color('warning'),
+    ];
+}
+
 }

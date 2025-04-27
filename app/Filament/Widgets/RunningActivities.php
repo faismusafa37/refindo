@@ -1,13 +1,13 @@
 <?php
-
 namespace App\Filament\Widgets;
 
 use App\Models\Activity;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Auth;
 
 class RunningActivities extends ChartWidget
 {
-    protected static ?string $heading = 'Distribusi Status Aktivitas';
+    protected static ?string $heading = 'Total Distribusi Status Aktivitas';
 
     protected function getType(): string
     {
@@ -29,36 +29,43 @@ class RunningActivities extends ChartWidget
 
     protected function getData(): array
     {
-        // Ambil jumlah aktivitas berdasarkan status yang ada, dengan menggunakan like
+        $user = Auth::user();
+
+        // Base query activity
+        $query = Activity::query();
+
+        // Kalau user adalah DLH, filter berdasarkan project_id
+        if ($user->hasRole('DLH')) {
+            $query->where('project_id', $user->project_id);
+        }
+
+        // Hitung jumlah aktivitas berdasarkan status
         $data = [
-            'RFU' => Activity::where('status', 'like', '%RFU%')->count(),
-            'on going' => Activity::where('status', 'like', '%on going%')->count(),
-            'selesai' => Activity::where('status', 'like', '%selesai%')->count(),
+            'RFU' => (clone $query)->where('status', 'like', '%RFU%')->count(),
+            'on going' => (clone $query)->where('status', 'like', '%on going%')->count(),
+            'selesai' => (clone $query)->where('status', 'like', '%selesai%')->count(),
         ];
 
-        // Menyesuaikan label dan warna berdasarkan status yang ada
+        // Menyesuaikan label dan warna berdasarkan status
         $labels = [];
         $dataValues = [];
         $backgroundColors = [];
 
-        // Keterangan status yang lebih ringkas
         $statusLabels = [
             'RFU' => 'Aktivitas yang Terdaftar',
             'on going' => 'On Going',
             'selesai' => 'Finish'
         ];
 
-        // Warna untuk tiap status
         $colors = [
             'RFU' => '#FFCE56', // Kuning
             'on going' => '#36A2EB', // Biru
             'selesai' => '#4CAF50', // Hijau
         ];
 
-        // Proses data untuk chart
         foreach ($statusLabels as $key => $label) {
             $labels[] = $label;
-            $dataValues[] = $data[$key] ?? 0; // Jika tidak ada data, set 0
+            $dataValues[] = $data[$key] ?? 0;
             $backgroundColors[] = $colors[$key];
         }
 

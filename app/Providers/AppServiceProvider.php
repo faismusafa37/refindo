@@ -5,7 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Filament\Panel;
 use Filament\Support\Facades\FilamentView;
-use Illuminate\Support\Facades\Blade;
+use App\Filament\Resources\RoleResource; 
 
 
 
@@ -27,6 +27,13 @@ class AppServiceProvider extends ServiceProvider
         FilamentView::registerRenderHook(
             'panels::body.start',
             fn () => '<link rel="stylesheet" href="' . asset('css/app.css') . '">',
+
         );
+        
+        FilamentView::registerRenderHook(
+            'panels::body.start',
+            fn () => '<div class="custom-background" style="background-image: url(' . asset('images') . ');"></div>'
+        );
+        
     }
 }

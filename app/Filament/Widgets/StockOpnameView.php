@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filament\Widgets;
 
 use App\Models\StockOpname;
@@ -8,6 +7,7 @@ use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Illuminate\Support\Facades\Auth;
 
 class StockOpnameView extends TableWidget
 {
@@ -45,5 +45,35 @@ class StockOpnameView extends TableWidget
                 ->sortable()
                 ->formatStateUsing(fn ($state) => number_format($state)),
         ];
+    }
+
+    public static function shouldDisplay(): bool
+    {
+        $user = auth()->user();
+
+        // Daftar project DLH
+        $dlhProjects = [
+            'UPST Bantar Gebang (Dinas LH)',
+            'Sudin Selatan (Dinas LH)',
+            'Sudin Barat (Dinas LH)',
+            'Sudin Pusat (Dinas LH)',
+        ];
+
+        // Jika user tidak login = sembunyikan widget
+        if (! $user) {
+            return false;
+        }
+
+        // Sembunyikan widget jika role user adalah 'DLH' atau jika user terkait dengan project DLH
+        if ($user->hasRole('DLH')) {
+            // Cek apakah project user terkait ada di daftar project DLH
+            $userProjects = $user->projects->pluck('name')->toArray();
+            if (array_intersect($userProjects, $dlhProjects)) {
+                return false;
+            }
+        }
+
+        // Pastikan hanya ditampilkan jika pengguna memiliki permission 'view stock opname'
+        return $user->can('view stock opname');
     }
 }

@@ -7,20 +7,31 @@ use App\Models\Activity;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
-
 class ActivityController extends Controller
 {
+    public function __construct()
+    {
+        // Middleware untuk mengatur permission berdasarkan aksi
+        $this->middleware('permission:view activity', ['only' => ['index']]);
+        $this->middleware('permission:create activity', ['only' => ['create', 'store']]);
+        $this->middleware('permission:update activity', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete activity', ['only' => ['destroy']]);
+    }
+
+    // Menampilkan daftar activities
     public function index()
     {
         $activities = Activity::all();
         return view('activities.index', compact('activities'));
     }
 
+    // Menampilkan form untuk membuat activity baru
     public function create()
     {
         return view('activities.create');
     }
 
+    // Menyimpan activity baru
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -48,9 +59,9 @@ class ActivityController extends Controller
             'bast_document' => 'nullable|file|mimes:pdf,doc,docx',
         ]);
 
-        $validatedData['user_id'] = auth::id();
+        $validatedData['user_id'] = Auth::id();
 
-
+        // Proses upload file
         foreach (['photo_1', 'photo_2', 'photo_3'] as $photo) {
             if ($request->hasFile($photo)) {
                 $validatedData[$photo] = $request->file($photo)->store('uploads/activities', 'public');
@@ -61,21 +72,26 @@ class ActivityController extends Controller
             $validatedData['bast_document'] = $request->file('bast_document')->store('uploads/documents', 'public');
         }
 
+        // Simpan data activity
         Activity::create($validatedData);
 
-        return redirect()->route('activities.index')->with('success', 'Activity berhasil ditambahkan');
+        // Redirect ke admin/activities setelah sukses
+        return redirect()->route('admin.activities.index')->with('success', 'Activity berhasil ditambahkan');
     }
 
+    // Menampilkan detail activity
     public function show(Activity $activity)
     {
         return view('activities.show', compact('activity'));
     }
 
+    // Menampilkan form untuk mengedit activity
     public function edit(Activity $activity)
     {
         return view('activities.edit', compact('activity'));
     }
 
+    // Memperbarui activity
     public function update(Request $request, Activity $activity)
     {
         $validatedData = $request->validate([
@@ -104,6 +120,7 @@ class ActivityController extends Controller
             'user_id' => 'required|exists:users,id',
         ]);
 
+        // Proses upload file, jika ada perubahan file, hapus file lama
         foreach (['photo_1', 'photo_2', 'photo_3'] as $file) {
             if ($request->hasFile($file)) {
                 if ($activity->$file) {
@@ -120,21 +137,27 @@ class ActivityController extends Controller
             $validatedData['bast_document'] = $request->file('bast_document')->store('uploads/documents', 'public');
         }
 
+        // Update data activity
         $activity->update($validatedData);
 
-        return redirect()->route('activities.index')->with('success', 'Activity berhasil diperbarui!');
+        // Redirect ke admin/activities setelah sukses
+        return redirect()->route('admin.activities.index')->with('success', 'Activity berhasil diperbarui!');
     }
 
+    // Menghapus activity
     public function destroy(Activity $activity)
     {
+        // Hapus file jika ada
         foreach (['photo_1', 'photo_2', 'photo_3', 'bast_document'] as $file) {
             if ($activity->$file) {
                 Storage::disk('public')->delete($activity->$file);
             }
         }
 
+        // Hapus activity
         $activity->delete();
 
-        return redirect()->route('activities.index')->with('success', 'Activity berhasil dihapus!');
+        // Redirect ke admin/activities setelah sukses
+        return redirect()->route('admin.activities.index')->with('success', 'Activity berhasil dihapus!');
     }
 }
