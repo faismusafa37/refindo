@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\ExportAction;
 use Illuminate\Support\Facades\Auth;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\HtmlColumn;
 use Carbon\Carbon;
 
@@ -20,6 +21,8 @@ class ActivityResource extends Resource
     protected static ?string $model = Activity::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationGroup = 'Service Management';
+
+
 
     public static function form(Form $form): Form
     {
@@ -191,7 +194,7 @@ class ActivityResource extends Resource
                     ->openUrlInNewTab(),
 
                 Tables\Columns\ImageColumn::make('photo_2')->label('Foto On Going')
-                    ->url(fn ($record) => $record->photo_2 ? asset('storage/' . $record->photo_2) : null)
+                    ->url(fn ($record): string|null => $record->photo_2 ? asset('storage/' . $record->photo_2) : null)
                     ->openUrlInNewTab(),
 
                 Tables\Columns\ImageColumn::make('photo_3')->label('Foto After')

@@ -10,10 +10,14 @@ class ListActivities extends ListRecords
 {
     protected static string $resource = ActivityResource::class;
 
+    
+
     protected function getHeaderActions(): array
     {
         return [
             Actions\CreateAction::make(),
         ];
     }
+
+    
 }

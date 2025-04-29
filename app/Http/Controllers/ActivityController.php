@@ -9,14 +9,6 @@ use Illuminate\Support\Facades\Auth;
 
 class ActivityController extends Controller
 {
-    public function __construct()
-    {
-        // Middleware untuk mengatur permission berdasarkan aksi
-        $this->middleware('permission:view activity', ['only' => ['index']]);
-        $this->middleware('permission:create activity', ['only' => ['create', 'store']]);
-        $this->middleware('permission:update activity', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:delete activity', ['only' => ['destroy']]);
-    }
 
     // Menampilkan daftar activities
     public function index()
