@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PartDismantleResource\Pages;
@@ -71,6 +70,11 @@ class PartDismantleResource extends Resource
                     ->exporter(PartExporter::class)
                     ->label('Export CSV')
                     ->icon('heroicon-o-arrow-down-tray'),
+            ])
+            ->actions([
+                // Hanya Admin yang bisa delete, User tidak bisa
+                Tables\Actions\DeleteAction::make()
+                    ->hidden(fn () => Auth::user()->hasRole('user')), // Sembunyikan tombol delete untuk User
             ]);
     }
 

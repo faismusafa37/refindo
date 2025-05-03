@@ -20,22 +20,17 @@ class BudgetStats extends TableWidget
     // Mengatur visibilitas widget berdasarkan role
     public static function canView(): bool
     {
-        // Hanya Admin dan User yang bisa melihat, DLH tidak bisa
-        return ! Auth::user()->hasRole('DLH') && Auth::user()->can('view anggaran');
+        $user = Auth::user();
+
+        // Cek login dan role
+        return $user && $user->hasAnyRole(['admin', 'user']);
     }
 
     // Mendapatkan query untuk tabel berdasarkan project yang terkait
     public function getTableQuery(): Builder
-    {
-        $query = Anggaran::query()->with('project');
-
-        // Jika bukan Admin, hanya data project terkait user yang akan ditampilkan
-        if (! Auth::user()->hasRole('admin')) {
-            $query->where('project_id', Auth::user()->project_id);
-        }
-
-        return $query;
-    }
+{
+    return Anggaran::query()->with('project');
+}
 
     // Menentukan kolom-kolom yang ditampilkan di tabel
     protected function getTableColumns(): array

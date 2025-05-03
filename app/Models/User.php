@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
-
+use Spatie\Permission\Models\Role;
 /**
  * @method bool hasRole(string|array|\Spatie\Permission\Models\Role $roles, ?string $guard = null)
  */
@@ -19,11 +19,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    protected $fillable = ['name', 'email', 'password', 'role_id', 'project_id', 'role_type'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -35,6 +31,9 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $guard_name = 'web';
+
+    protected $appends = ['first_role', 'role_id'];
     /**
      * Get the attributes that should be cast.
      *
@@ -47,6 +46,23 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function getRoleIdAttribute()
+    {
+        if (!empty($this->roles) && !empty($this->roles[0])) {
+            return $this->roles[0]->id;
+        }
+        return null;
+    }
+
+    public function getFirstRoleAttribute()
+    {
+        if (!empty($this->roles) && !empty($this->roles[0])) {
+            return $this->roles[0]->name;
+        }
+        return '';
+    }
+
 
     public function project()
     {

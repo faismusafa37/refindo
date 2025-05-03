@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\HtmlColumn;
 use Carbon\Carbon;
+use Filament\Tables\Filters\Filter;
+use Illuminate\Support\Facades\Log;
 
 class ActivityResource extends Resource
 {
@@ -227,39 +229,53 @@ class ActivityResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
-                ->visible(fn () => Auth::user()->hasRole('Admin')),
+                ->visible(fn () => Auth::user()->hasRole('admin')),
             ]);
     }
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
-    {
-        $query = parent::getEloquentQuery();
+{
+    $query = parent::getEloquentQuery();
 
-        if (Auth::user()->hasRole('User') || Auth::user()->hasRole('DLH')) {
-            $projectId = Auth::user()->project_id;
-            if ($projectId) {
-                $query->where('project_id', $projectId);
+    if (Auth::check()) {
+        $user = Auth::user();
+        Log::info('logged in', [$user]);
+        if ($user->hasRole('DLH')) {
+            Log::info('role DLH', [$user->roles]);
+            if ($user->project_id) {
+                return $query->where('project_id', $user->project_id);
             } else {
-                $query->whereNull('id'); // kalau gak ada project_id, ga nampilin apa-apa
+                // DLH tanpa project_id -> tidak bisa lihat data
+                return $query->whereRaw('1 = 0');
             }
         }
+        Log::info('role not DLH', [$user->roles]);
 
+        // Admin dan role lain bisa lihat semua data
         return $query;
     }
+    Log::info('not logged in', []);
+
+    // Kalau tidak login, tidak bisa lihat data
+    return $query->whereRaw('1 = 0');
+}
+
+
+
 
     public static function canCreate(): bool
 {
-    return !Auth::user()->hasRole('User');
+    return !Auth::user()?->hasRole('DLH');
 }
 
 public static function canEdit($record): bool
 {
-    return !Auth::user()->hasRole('User');
+    return !Auth::user()?->hasRole('DLH');
 }
 
 public static function canDelete($record): bool
 {
-    return Auth::user()->hasRole('Admin');
+    return Auth::user()->hasRole('admin');
 }
 
     public static function getPages(): array

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PartDismantleResource\Pages;
 use App\Filament\Resources\PartDismantleResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Auth;
 
 class EditPartDismantle extends EditRecord
 {
@@ -13,7 +14,9 @@ class EditPartDismantle extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            // Aksi Delete hanya terlihat oleh Admin
+            Actions\DeleteAction::make()
+            ->hidden(fn () => Auth::user()->hasRole('user')),
         ];
     }
     protected function getRedirectUrl(): string

@@ -134,10 +134,12 @@ class StockOpnameResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                ->hidden(fn () => Auth::user()->hasRole('user')),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()
+                ->hidden(fn () => Auth::user()->hasRole('user')),
             ]);
     }
 

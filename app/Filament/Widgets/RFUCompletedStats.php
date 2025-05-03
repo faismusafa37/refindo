@@ -8,12 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class RFUCompletedStats extends BaseWidget
 {
-    // Mengatur visibilitas widget berdasarkan role
-    public static function canView(): bool
-    {
-        // Hanya Admin dan User yang bisa melihat widget ini, DLH tidak bisa
-        return !Auth::user()->hasRole('DLH');
-    }
+    
 
     // Mendapatkan data untuk menampilkan kartu statistik
     protected function getCards(): array
@@ -30,7 +25,7 @@ class RFUCompletedStats extends BaseWidget
 
         return [
             // Statistik untuk total aktivitas dengan status 'RFU'
-            Card::make('Total Activities', (clone $query)->where('status', 'like', '%RFU%')->count())
+            Card::make('Total Activities', (clone $query)->where('status', 'like', '%open%')->count())
                 ->description('Jumlah seluruh aktivitas yang terdaftar dengan status RFU')
                 ->color('primary')
                 ->url(route('filament.admin.resources.activities.index', [
@@ -38,7 +33,7 @@ class RFUCompletedStats extends BaseWidget
                 ])),
 
             // Statistik untuk aktivitas yang sedang berjalan ('on going')
-            Card::make('On Going', (clone $query)->where('status', 'like', '%on going%')->count())
+            Card::make('On Going', (clone $query)->where('status', 'like', '%in progress%')->count())
                 ->description('Aktivitas yang sedang berjalan')
                 ->color('warning')
                 ->url(route('filament.admin.resources.activities.index', [
@@ -46,7 +41,7 @@ class RFUCompletedStats extends BaseWidget
                 ])),
 
             // Statistik untuk aktivitas yang sudah selesai ('selesai')
-            Card::make('Selesai', (clone $query)->where('status', 'like', '%selesai%')->count())
+            Card::make('Selesai', (clone $query)->where('status', 'like', '%RFU%')->count())
                 ->description('Aktivitas yang sudah selesai')
                 ->color('success')
                 ->url(route('filament.admin.resources.activities.index', [

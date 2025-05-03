@@ -41,9 +41,9 @@ class RunningActivities extends ChartWidget
 
         // Hitung jumlah aktivitas berdasarkan status
         $data = [
-            'RFU' => (clone $query)->where('status', 'like', '%RFU%')->count(),
-            'on going' => (clone $query)->where('status', 'like', '%on going%')->count(),
-            'selesai' => (clone $query)->where('status', 'like', '%selesai%')->count(),
+            'RFU' => (clone $query)->where('status', 'like', '%open%')->count(),
+            'on going' => (clone $query)->where('status', 'like', '%in progress%')->count(),
+            'selesai' => (clone $query)->where('status', 'like', '%RFU%')->count(),
         ];
 
         // Menyesuaikan label dan warna berdasarkan status

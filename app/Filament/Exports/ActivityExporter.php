@@ -3,9 +3,9 @@
 namespace App\Filament\Exports;
 
 use App\Models\Activity;
-use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
-use Filament\Actions\Exports\Models\Export;
+use Filament\Actions\Exports\ExportColumn;
+use Filament\Forms\Components\DatePicker;
 
 class ActivityExporter extends Exporter
 {
@@ -24,11 +24,39 @@ class ActivityExporter extends Exporter
             ExportColumn::make('time_out')->label('Time Out'),
             ExportColumn::make('hour_meter')->label('Hour Meter'),
             ExportColumn::make('status')->label('Status'),
-            ExportColumn::make('price')->label('Price')->formatStateUsing(fn ($state) =>'Rp' . number_format($state, 2)),
+            ExportColumn::make('price')->label('Price')->formatStateUsing(fn ($state) => 'Rp' . number_format($state, 2)),
         ];
     }
 
-    public static function getCompletedNotificationBody(Export $export): string
+    public static function form($form)
+    {
+        // Menambahkan filter rentang tanggal untuk ekspor
+        return $form->schema([
+            DatePicker::make('start_date')
+                ->label('Start Date')
+                ->required(),
+            DatePicker::make('end_date')
+                ->label('End Date')
+                ->required(),
+        ]);
+    }
+
+    public static function getQuery(array $filters): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Activity::query();
+
+        // Filter berdasarkan rentang tanggal yang dipilih
+        if (isset($filters['start_date']) && isset($filters['end_date'])) {
+            $query->whereBetween('time_in', [
+                $filters['start_date'],
+                $filters['end_date'],
+            ]);
+        }
+
+        return $query;
+    }
+
+    public static function getCompletedNotificationBody($export): string
     {
         $body = 'Your activity export has completed and ' . number_format($export->successful_rows) . ' ' . str('row')->plural($export->successful_rows) . ' exported.';
 

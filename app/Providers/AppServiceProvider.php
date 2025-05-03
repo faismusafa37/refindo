@@ -3,11 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Filament\Panel;
 use Filament\Support\Facades\FilamentView;
-use App\Filament\Resources\RoleResource; 
-
-
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,7 +12,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-       //
+        //
     }
 
     /**
@@ -24,16 +20,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Menambahkan file CSS custom ke halaman dashboard Filament
         FilamentView::registerRenderHook(
-            'panels::body.start',
-            fn () => '<link rel="stylesheet" href="' . asset('css/app.css') . '">',
+            'panels::head.end', // Menambahkan link ke head
+            fn () => '<link rel="stylesheet" href="' . asset('css/filament.css') . '">',
+        );
 
-        );
-        
+        // Menambahkan class khusus ke body di dashboard
         FilamentView::registerRenderHook(
-            'panels::body.start',
-            fn () => '<div class="custom-background" style="background-image: url(' . asset('images') . ');"></div>'
+            'panels::body.start', // Menambahkan class ke body
+            fn () => '<script>document.body.classList.add("dashboard-page")</script>'
         );
-        
     }
 }

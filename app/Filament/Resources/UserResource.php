@@ -1,15 +1,15 @@
 <?php
-
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
+use App\Models\Project;
+use Spatie\Permission\Models\Role;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
@@ -17,6 +17,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Get;
+use Illuminate\Database\Eloquent\Model;
 
 class UserResource extends Resource
 {
@@ -28,7 +30,7 @@ class UserResource extends Resource
 
     public static function canAccess(): bool
     {
-        // Biar DLH gak bisa akses User Management
+        // Hanya admin yang bisa mengakses User Management
         return Auth::user()?->hasRole('admin');
     }
 
@@ -55,22 +57,36 @@ class UserResource extends Resource
                             ->label('Password'),
                     ]),
 
-                Section::make('Roles')
+                Section::make('Roles & Project')
                     ->schema([
-                        Select::make('roles')
-                            ->relationship('roles', 'name')
-                            ->preload()
-                            ->multiple()
+                        // Pilih Role
+                        Select::make('role_id') // Menggunakan 'role_id' untuk relasi role
                             ->label('Assign Role(s)')
-                            ->required(),
-                    ]),
+                            ->options(Role::pluck('name', 'id')) // Menampilkan nama role
+                            ->reactive()
+                            ->preload()
+                            ->required()
+                            ->afterStateUpdated(fn (callable $set) => $set('project_id', null)), // Reset project_id jika role berubah
+
+                        // Pilih Project, selalu tampil
+                        Select::make('project_id')
+                            ->label('Project')
+                            ->options(Project::pluck('name', 'id'))
+                            ->searchable()
+                            ->required(fn (Get $get) => $get('role_id') == Role::where('name', 'DLH')->first()?->id)
+                            ->visible(function (callable $get) {
+                                $role = Role::find((int)$get('role_id'));
+                                if ($role && $role->name == 'DLH') {
+                                    return true;
+                                }
+                                return false;
+                            }),
+                        ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        $user = auth()->user();
-
         return $table
             ->columns([
                 TextColumn::make('name')
@@ -81,26 +97,25 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('roles.name')
+                TextColumn::make('first_role') // Menampilkan nama role
                     ->label('Roles')
                     ->badge()
                     ->sortable(),
+
+                TextColumn::make('project.name') // Menampilkan nama project
+                    ->label('Project')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
                 EditAction::make(),
             ])
-            ->bulkActions(
-                $user->hasRole('Admin') ? [
-                    DeleteBulkAction::make(),
-                ] : []
-            );
+            ->bulkActions([
+                DeleteBulkAction::make(),
+            ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [];
-    }
-
+ 
     public static function getPages(): array
     {
         return [

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Spatie\Permission\Models\Role;
 
 class EditUser extends EditRecord
 {
@@ -14,11 +15,29 @@ class EditUser extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
+            
         ];
     }
 
-    protected function getRedirectUrl(): string
+    /**
+     * Saat data diisi ke form (untuk pre-fill)
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
     {
-        return $this->getResource()::getUrl('index');
+        $role = Role::find($data['role_id'] ?? null);
+        
+        if ($role) {
+            // Simpan role_name agar disinkronkan nanti
+            $this->roleNameToSync = $role->name;
+        }
+    
+        return $data;
+    }
+    
+    protected function afterSave(): void
+    {
+        if (isset($this->roleNameToSync)) {
+            $this->record->syncRoles([$this->roleNameToSync]);
+        }
     }
 }

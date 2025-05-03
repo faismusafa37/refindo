@@ -26,7 +26,13 @@ class ActivityChart extends ChartWidget
 
         // Hitung jumlah aktivitas untuk minggu ini, bulan ini, dan tahun ini
         $weeklyData = (clone $query)->whereBetween('created_at', [Carbon::today()->startOfWeek(), Carbon::today()->endOfWeek()])->count();
-        $monthlyData = (clone $query)->whereBetween('created_at', [Carbon::today()->startOfMonth(), Carbon::today()->endOfMonth()])->count();
+
+        // Perbaiki query untuk bulan ini
+        $monthlyData = (clone $query)->whereBetween('created_at', [
+            Carbon::today()->startOfMonth()->startOfDay(),  // Mulai bulan ini
+            Carbon::today()->endOfMonth()->endOfDay()       // Akhir bulan ini
+        ])->count();
+
         $yearlyData = (clone $query)->whereBetween('created_at', [Carbon::today()->startOfYear(), Carbon::today()->endOfYear()])->count();
 
         return [

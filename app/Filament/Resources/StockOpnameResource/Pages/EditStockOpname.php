@@ -5,6 +5,7 @@ namespace App\Filament\Resources\StockOpnameResource\Pages;
 use App\Filament\Resources\StockOpnameResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Auth;
 
 class EditStockOpname extends EditRecord
 {
@@ -13,7 +14,9 @@ class EditStockOpname extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            // Aksi Delete hanya terlihat oleh Admin
+            Actions\DeleteAction::make()
+            ->hidden(fn () => Auth::user()->hasRole('user'))
         ];
     }
 

@@ -24,8 +24,8 @@ class AnggaranResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     protected static ?string $navigationGroup = 'Finance';
 
-    // Ini yang bener buat ngatur visibilitas di sidebar
-    public static function canViewAny(): bool
+    // Hanya tampil di sidebar jika role Admin atau User
+    public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->user();
 
@@ -33,16 +33,7 @@ class AnggaranResource extends Resource
             return false;
         }
 
-        if ($user->hasRole('DLH') || in_array($user->getRoleNames()->first(), [
-            'UPST Bantar Gebang (Dinas LH)',
-            'Sudin Selatan (Dinas LH)',
-            'Sudin Barat (Dinas LH)',
-            'Sudin Pusat (Dinas LH)',
-        ])) {
-            return false;
-        }
-
-        return true;
+        return $user->hasRole(['admin', 'user']);
     }
 
     public static function form(Form $form): Form
@@ -89,7 +80,6 @@ class AnggaranResource extends Resource
         ->actions([
             ViewAction::make(),
             EditAction::make(),
-            DeleteAction::make(),
         ])
         ->bulkActions([
             DeleteBulkAction::make(),
@@ -106,7 +96,7 @@ class AnggaranResource extends Resource
         ];
     }
 
-    // Buat simpan history perubahan current_amount
+    // Simpan history perubahan current_amount
     public static function boot(): void
     {
         parent::boot();
