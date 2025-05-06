@@ -40,4 +40,9 @@ class EditUser extends EditRecord
             $this->record->syncRoles([$this->roleNameToSync]);
         }
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

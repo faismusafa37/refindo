@@ -16,6 +16,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\HtmlColumn;
 use Carbon\Carbon;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Support\Facades\Log;
 
 class ActivityResource extends Resource
@@ -216,7 +217,27 @@ class ActivityResource extends Resource
 
                 Tables\Columns\TextColumn::make('user.name')->label('User')->sortable(),
             ])
-            ->filters([])
+            ->filters([
+                SelectFilter::make('status_group')
+                    ->label('Status')
+                    ->options([
+                        'on_going' => 'On Progress & Pending',
+                        'rfu' => 'RFU (Selesai)',
+                    ])
+                    ->default('all')
+                    ->query(function ($query) {
+                        $value = request()->input('tableFilters.status_group');
+            
+                        if ($value === 'on_going') {
+                            return $query->whereIn('status', ['in progress', 'pending']);
+                        } elseif ($value === 'rfu') {
+                            return $query->where('status', 'like', '%RFU%');
+                        }
+            
+                        return $query;
+                    }),
+                    
+            ])
             ->actions([
                 Tables\Actions\EditAction::make()
                 ->visible(fn () => !Auth::user()->hasRole('DLH')),
