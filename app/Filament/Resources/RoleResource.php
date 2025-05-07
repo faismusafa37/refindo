@@ -8,6 +8,9 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Card;
+
 
 class RoleResource extends Resource
 {
@@ -31,12 +34,15 @@ class RoleResource extends Resource
                     ->label('Role Name')
                     ->required(),
 
-                Forms\Components\CheckboxList::make('permissions')
-                    ->label('Permissions')
-                    ->relationship('permissions', 'name') // 🔥 Ini otomatis handle load & save
-                    ->required()
-                    ->columns(2),
-            ]);
+                    Card::make([
+                        CheckboxList::make('permissions')
+                            ->label('Permissions')
+                            ->relationship('permissions', 'name')
+                            ->required()
+                            ->columns(2),
+                    ])
+                    ->columnSpanFull(), // opsional kalau ingin lebar penuh
+                ]);
     }
 
     public static function table(Tables\Table $table): Tables\Table
