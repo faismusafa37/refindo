@@ -219,28 +219,35 @@ class ActivityResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status_group')
-                    ->label('Status')
-                    ->options([
-                        'on_going' => 'On Progress & Pending',
-                        'rfu' => 'RFU (Selesai)',
-                    ])
-                    ->default('all')
-                    ->query(function ($query) {
-                        $value = request()->input('tableFilters.status_group');
-            
-                        if ($value === 'on_going') {
-                            return $query->whereIn('status', ['in progress', 'pending']);
-                        } elseif ($value === 'rfu') {
-                            return $query->where('status', 'like', '%RFU%');
+                ->label('Status')
+                ->options([
+                    'on_going' => 'On Progress & Pending',
+                    'rfu' => 'RFU (Selesai)',
+                ])
+                ->query(function ($query, $data) {
+                    if (!empty($data['value'])) {
+                        if ($data['value'] === 'on_going') {
+                            $query->whereIn('status', ['in progress', 'pending']);
+                        } elseif ($data['value'] === 'rfu') {
+                            $query->where('status', 'like', '%RFU%');
                         }
-            
-                        return $query;
-                    }),
+                    }
+                })
+                ->indicateUsing(function ($data) {
+                    if (!empty($data['value'])) {
+                        if ($data['value'] === 'on_going') {
+                            return 'Status: On Going';
+                        } elseif ($data['value'] === 'rfu') {
+                            return 'Status: RFU';
+                        }
+                    }
+                    return null;
+                })
                     
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                ->visible(fn () => !Auth::user()->hasRole('DLH')),
+                ->visible(fn (Activity $record): bool => auth()->user()->can('update activities')),
             ])
             ->headerActions([
                 ExportAction::make()
@@ -250,7 +257,7 @@ class ActivityResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
-                ->visible(fn () => Auth::user()->hasRole('admin')),
+                ->visible(fn () => auth()->user()->can('delete activities')),
             ]);
     }
 
@@ -283,21 +290,21 @@ class ActivityResource extends Resource
 
 
 
-
-    public static function canCreate(): bool
+public static function canCreate(): bool
 {
-    return !Auth::user()?->hasRole('DLH');
+    return auth()->user()?->can('create activities');
 }
 
 public static function canEdit($record): bool
 {
-    return !Auth::user()?->hasRole('DLH');
+    return auth()->user()?->can('update activities');
 }
 
 public static function canDelete($record): bool
 {
-    return Auth::user()->hasRole('admin');
+    return auth()->user()?->can('delete activities');
 }
+
 
     public static function getPages(): array
     {

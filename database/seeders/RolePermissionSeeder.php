@@ -11,23 +11,42 @@ class RolePermissionSeeder extends Seeder
     {
         // Permissions
         $permissions = [
-            'view activities',        // View data aktivitas
-            'create activities',      // Create aktivitas
-            'update activities',      // Update aktivitas
-            'delete activities',      // Delete aktivitas
-            'view anggaran',          // View anggaran
-            'create anggaran',        // Create anggaran
-            'update anggaran',        // Update anggaran
-            'delete anggaran',        // Delete anggaran
-            'view stock opname',      // View stock opname
-            'create stock opname',    // Create stock opname
-            'update stock opname',    // Update stock opname
-            'delete stock opname',    // Delete stock opname
-            'view part dismantle',    // View part dismantle
-            'create part dismantle',  // Create part dismantle
-            'update part dismantle',  // Update part dismantle
-            'delete part dismantle',  // Delete part dismantle
+            // Activity Permissions
+            'view activities',
+            'create activities',
+            'update activities',
+            'delete activities',
+        
+            // Anggaran Permissions
+            'view anggaran',
+            'create anggaran',
+            'update anggaran',
+            'delete anggaran',
+        
+            // Stock Opname Permissions
+            'view stock opname',
+            'create stock opname',
+            'update stock opname',
+            'delete stock opname',
+        
+            // Part Dismantle Permissions
+            'view part dismantle',
+            'create part dismantle',
+            'update part dismantle',
+            'delete part dismantle',
+        
+            // Role & User Management Permissions
+            'view roles',
+            'create roles',
+            'update roles',
+            'delete roles',
+        
+            'view users',
+            'create users',
+            'update users',
+            'delete users',
         ];
+        
 
         // Create permissions if they do not exist
         foreach ($permissions as $permission) {

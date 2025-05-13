@@ -68,20 +68,20 @@ class UserResource extends Resource
                             ->required()
                             ->afterStateUpdated(fn (callable $set) => $set('project_id', null)), // Reset project_id jika role berubah
 
-                        // Pilih Project, selalu tampil
+                        // Pilih Project, tampilkan jika role adalah DLH atau DLH Viewer
                         Select::make('project_id')
                             ->label('Project')
                             ->options(Project::pluck('name', 'id'))
                             ->searchable()
-                            ->required(fn (Get $get) => $get('role_id') == Role::where('name', 'DLH')->first()?->id)
-                            ->visible(function (callable $get) {
-                                $role = Role::find((int)$get('role_id'));
-                                if ($role && $role->name == 'DLH') {
-                                    return true;
-                                }
-                                return false;
-                            }),
-                        ]),
+                            ->required(fn (Get $get) => in_array($get('role_id'), [
+                                Role::where('name', 'DLH')->first()?->id,
+                                Role::where('name', 'DLH Viewer')->first()?->id,
+                            ])) // Required jika role DLH atau DLH Viewer
+                            ->visible(fn (callable $get) => in_array($get('role_id'), [
+                                Role::where('name', 'DLH')->first()?->id,
+                                Role::where('name', 'DLH Viewer')->first()?->id,
+                            ])), // Tampilkan jika role DLH atau DLH Viewer
+                    ]), 
             ]);
     }
 
@@ -97,7 +97,7 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('first_role') // Menampilkan nama role
+                TextColumn::make('roles.name') // Mengakses relasi role
                     ->label('Roles')
                     ->badge()
                     ->sortable(),
@@ -115,7 +115,6 @@ class UserResource extends Resource
             ]);
     }
 
- 
     public static function getPages(): array
     {
         return [

@@ -12,6 +12,7 @@ use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BudgetAbsorptionStats extends StatsOverviewWidget
@@ -20,12 +21,11 @@ class BudgetAbsorptionStats extends StatsOverviewWidget
 
     protected static bool $isLazy = false;
     protected static ?int $sort = -1;
+    protected static ?string $pollingInterval = '30s';
 
     public static function canView(): bool
     {
-        $can = auth()->check() && auth()->user()->hasAnyRole(['admin', 'user']);
-        Log::info('canView BudgetAbsorptionStats', ['can' => $can]);
-        return $can;
+        return auth()->check() && auth()->user()->hasAnyRole(['admin', 'user']);
     }
 
     protected function hasFiltersForm(): bool
@@ -35,69 +35,80 @@ class BudgetAbsorptionStats extends StatsOverviewWidget
 
     public function filtersForm(Form $form): Form
     {
-        if (!auth()->user()->hasAnyRole(['admin', 'user'])) {
-            return $form;
-        }
-
         return $form->schema([
             Select::make('project_id')
                 ->label('Pilih Wilayah')
                 ->options(function () {
-                    return Cache::remember('projects_select_options', 60, function () {
-                        return Project::pluck('name', 'id');
-                    });
+                    return Project::orderBy('name')->pluck('name', 'id');
                 })
                 ->placeholder('-- Pilih Wilayah --')
-                ->reactive()
-                ->live(),
+                ->searchable()
+                ->live()
+                ->debounce(500)
+                ->afterStateUpdated(function () {
+                    $this->clearCache();
+                }),
         ]);
     }
 
     protected function getCards(): array
     {
-        $user = Auth::user();
-        Log::info('getCards triggered by user', [
-            'user_id' => $user->id,
-            'roles' => $user->getRoleNames(),
-        ]);
+        $projectId = $this->filters['project_id'] ?? null;
+        
+        // Return empty array if no project selected
+        if (!$projectId) {
+            return [];
+        }
 
-        if ($user->hasAnyRole(['admin', 'user'])) {
-            $projectId = $this->filters['project_id'] ?? null;
+        try {
+            $cacheKey = "budget_stats_{$projectId}_" . Auth::id();
+            $data = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($projectId) {
+                $budget = Anggaran::where('project_id', $projectId)
+                    ->select(DB::raw('COALESCE(SUM(current_amount), 0) as total'))
+                    ->first();
 
-            if (!$projectId) {
-                Log::info('No project selected. Cards will not show.');
-                return [];
-            }
+                $used = Activity::where('project_id', $projectId)
+                    ->select(DB::raw('COALESCE(SUM(price), 0) as total'))
+                    ->first();
 
-            $cacheKey = 'budget_stats_' . $projectId;
-
-            [$totalBudget, $totalUsed, $remaining] = Cache::remember($cacheKey, 60, function () use ($projectId) {
-                $totalBudget = Anggaran::where('project_id', $projectId)->sum('current_amount');
-                $totalUsed = Activity::where('project_id', $projectId)->sum('price');
-                $remaining = $totalBudget - $totalUsed;
-
-                return [$totalBudget, $totalUsed, $remaining];
+                return [
+                    'total_budget' => $budget->total,
+                    'total_used' => $used->total,
+                    'remaining' => $budget->total - $used->total
+                ];
             });
 
             return [
-                Card::make('Total Anggaran', 'Rp ' . number_format($totalBudget, 0, ',', '.'))
+                Card::make('Total Anggaran', 'Rp ' . number_format($data['total_budget'], 0, ',', '.'))
                     ->description('Jumlah anggaran tersedia')
                     ->descriptionIcon('heroicon-o-banknotes')
                     ->color('primary'),
 
-                Card::make('Penyerapan Anggaran', 'Rp ' . number_format($totalUsed, 0, ',', '.'))
+                Card::make('Penyerapan Anggaran', 'Rp ' . number_format($data['total_used'], 0, ',', '.'))
                     ->description('Biaya yang sudah terserap')
                     ->descriptionIcon('heroicon-o-chart-bar')
                     ->color('success'),
 
-                Card::make('Sisa Anggaran', 'Rp ' . number_format($remaining, 0, ',', '.'))
+                Card::make('Sisa Anggaran', 'Rp ' . number_format($data['remaining'], 0, ',', '.'))
                     ->description('Anggaran yang tersisa')
                     ->descriptionIcon('heroicon-o-currency-dollar')
-                    ->color('warning'),
+                    ->color($data['remaining'] < 0 ? 'danger' : 'warning'),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error loading budget stats: ' . $e->getMessage());
+            return [
+                Card::make('Error', 'Gagal memuat data')
+                    ->color('danger')
             ];
         }
+    }
 
-        Log::info('User tidak punya akses melihat cards.');
-        return [];
+    protected function clearCache(): void
+    {
+        $projectId = $this->filters['project_id'] ?? null;
+        if ($projectId) {
+            $cacheKey = "budget_stats_{$projectId}_" . Auth::id();
+            Cache::forget($cacheKey);
+        }
     }
 }

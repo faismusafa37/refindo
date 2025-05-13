@@ -24,24 +24,36 @@ class RFUCompletedStats extends BaseWidget
                 ->description('Jumlah seluruh aktivitas yang terdaftar')
                 ->color('primary')
                 ->url(route('filament.admin.resources.activities.index', [
-                    'tableFilters[status_group]' => 'all',
-                    
+                    'tableFilters' => [
+                        'status_group' => [
+                            'value' => 'all',
+                            'isActive' => true,
+                        ],
+                    ],
                 ])),
 
             Card::make('On Going', (clone $query)->whereIn('status', ['in progress', 'pending'])->count())
                 ->description('Aktivitas yang sedang berjalan atau pending')
                 ->color('warning')
                 ->url(route('filament.admin.resources.activities.index', [
-                    'tableFilters[status_group]' => 'on_going',
-                    
+                    'tableFilters' => [
+                        'status_group' => [
+                            'value' => 'on_going',
+                            'isActive' => true,
+                        ],
+                    ],
                 ])),
 
             Card::make('RFU', (clone $query)->where('status', 'like', '%RFU%')->count())
                 ->description('Aktivitas yang berstatus RFU')
                 ->color('success')
                 ->url(route('filament.admin.resources.activities.index', [
-                    'tableFilters[status_group]' => 'rfu',
-                    
+                    'tableFilters' => [
+                        'status_group' => [
+                            'value' => 'rfu',
+                            'isActive' => true,
+                        ],
+                    ],
                 ])),
         ];
     }

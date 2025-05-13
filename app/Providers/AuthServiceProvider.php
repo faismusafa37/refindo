@@ -16,10 +16,7 @@ class AuthServiceProvider extends ServiceProvider
      *
      * @var array<class-string, class-string>
      */
-    protected $policies = [
-        Activity::class => ActivityPolicy::class,
-        // Tambahkan model lainnya di sini kalau perlu
-    ];
+
 
     /**
      * Register any authentication / authorization services.
@@ -28,9 +25,5 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        Gate::define('viewAny', [ActivityPolicy::class, 'viewAny']);
-        Gate::define('create', [ActivityPolicy::class, 'create']);
-        Gate::define('update', [ActivityPolicy::class, 'update']);
-        Gate::define('delete', [ActivityPolicy::class, 'delete']);
     }
 }

@@ -17,6 +17,10 @@ class RolePolicy
             return true;
         }
 
+        if ($user->hasRole('admin')) {
+            return true; // Admin bisa mengakses role apapun
+        }
+
         return null; // Lanjut ke method lainnya jika tidak punya
     }
 
