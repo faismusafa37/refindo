@@ -16,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\{ViewAction, EditAction, DeleteAction, DeleteBulkAction};
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class AnggaranResource extends Resource
 {
@@ -34,6 +35,27 @@ class AnggaranResource extends Resource
         }
 
         return $user->hasRole(['admin', 'user']);
+    }
+
+    public static function canAccess(): bool
+    {
+        return Auth::user()?->can('view anggaran');
+    }
+
+    public static function canView($record): bool
+    {
+        return Auth::user()?->can('update anggaran', $record);
+    }
+    
+
+    public static function canEdit($record): bool
+    {
+        return Auth::user()?->can('update anggaran', $record);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Auth::user()?->can('delete anggaran', $record);
     }
 
     public static function form(Form $form): Form
@@ -56,6 +78,15 @@ class AnggaranResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $action1 = [];
+        $action2 = [];
+
+        if (Auth::user()?->can('update anggaran')) {
+            Log::info('can access');
+            $action1 = [
+                EditAction::make(),
+            ];
+        }
         return $table->columns([
             TextColumn::make('project.name')->label('Wilayah'),
             TextColumn::make('current_amount')->label('Anggaran Saat Ini')->money('IDR', true),
@@ -77,13 +108,10 @@ class AnggaranResource extends Resource
                     return 'Belum ada perubahan';
                 }),
         ])
-        ->actions([
-            ViewAction::make(),
-            EditAction::make(),
-        ])
-        ->bulkActions([
-            DeleteBulkAction::make(),
-        ]);
+            ->actions($action1)
+            ->actions([
+                DeleteAction::make(),
+            ]);
     }
 
     public static function getPages(): array
@@ -111,5 +139,10 @@ class AnggaranResource extends Resource
                 ]);
             }
         });
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('create anggaran');
     }
 }

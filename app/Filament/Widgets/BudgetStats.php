@@ -14,16 +14,14 @@ use Filament\Forms\Components\Select;
 
 class BudgetStats extends TableWidget
 {
+
     protected int|string|array $columnSpan = 'full';
     protected static ?string $heading = 'Anggaran Tahun';
 
     // Mengatur visibilitas widget berdasarkan role
-    public static function canView(): bool
+     public static function canView(): bool
     {
-        $user = Auth::user();
-
-        // Cek login dan role
-        return $user && $user->hasAnyRole(['admin', 'user']);
+        return auth()->check() && auth()->user()->can('view anggaran');
     }
 
     // Mendapatkan query untuk tabel berdasarkan project yang terkait

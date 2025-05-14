@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Auth;
 
 class StockOpnameView extends TableWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->check() && auth()->user()->can('view stock opname');
+    }
     protected static ?string $heading = 'Stock Movement';
 
     protected function getTableQuery(): Builder

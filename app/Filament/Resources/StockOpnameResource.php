@@ -25,8 +25,23 @@ class StockOpnameResource extends Resource
 
     public static function canAccess(): bool
     {
-        // Resource ini disembunyikan untuk role DLH
-        return !Auth::user()?->hasRole('DLH');
+        return Auth::user()?->can('view stock opname');
+    }
+
+    public static function canView($record): bool
+    {
+        return Auth::user()?->can('update stock opname', $record);
+    }
+    
+
+    public static function canEdit($record): bool
+    {
+        return Auth::user()?->can('update stock opname', $record);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Auth::user()?->can('delete stock opname', $record);
     }
 
     public static function form(Form $form): Form

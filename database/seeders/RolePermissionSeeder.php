@@ -9,6 +9,7 @@ class RolePermissionSeeder extends Seeder
 {
     public function run()
     {
+        Permission::whereNotNull('name')->delete();
         // Permissions
         $permissions = [
             // Activity Permissions
@@ -39,12 +40,14 @@ class RolePermissionSeeder extends Seeder
             'view roles',
             'create roles',
             'update roles',
-            'delete roles',
+            
         
             'view users',
             'create users',
             'update users',
             'delete users',
+
+            'view budget absorption',
         ];
         
 

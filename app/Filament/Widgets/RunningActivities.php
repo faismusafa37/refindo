@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Auth;
 
 class RunningActivities extends ChartWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->check() && auth()->user()->can('view activities');
+    }
     protected static ?string $heading = 'Total Distribusi Status Aktivitas';
 
     protected function getType(): string

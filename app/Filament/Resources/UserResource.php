@@ -30,8 +30,23 @@ class UserResource extends Resource
 
     public static function canAccess(): bool
     {
-        // Hanya admin yang bisa mengakses User Management
-        return Auth::user()?->hasRole('admin');
+        return Auth::user()?->can('view users');
+    }
+
+    public static function canView($record): bool
+    {
+        return Auth::user()?->can('update users', $record);
+    }
+    
+
+    public static function canEdit($record): bool
+    {
+        return Auth::user()?->can('update users', $record);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Auth::user()?->can('delete users', $record);
     }
 
     public static function form(Form $form): Form
@@ -65,6 +80,11 @@ class UserResource extends Resource
                             ->options(Role::pluck('name', 'id')) // Menampilkan nama role
                             ->reactive()
                             ->preload()
+                            ->relationship('roles','name')
+                            ->saveRelationshipsUsing(function ($record, $state) {
+                                $role = Role::find($state);
+                                $record->syncRoles([$role->name]);
+                            })
                             ->required()
                             ->afterStateUpdated(fn (callable $set) => $set('project_id', null)), // Reset project_id jika role berubah
 
@@ -97,7 +117,7 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('roles.name') // Mengakses relasi role
+                TextColumn::make('first_role') // Mengakses relasi role
                     ->label('Roles')
                     ->badge()
                     ->sortable(),

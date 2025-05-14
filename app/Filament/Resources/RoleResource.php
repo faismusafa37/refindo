@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -22,6 +23,26 @@ class RoleResource extends Resource
     protected static ?string $navigationLabel = 'Roles & Permissions';
     protected static ?string $navigationGroup = 'Access Management';
     protected static ?string $modelLabel = 'Role';
+
+    public static function canAccess(): bool
+    {
+        return Auth::user()?->can('view roles');
+    }
+
+    public static function canView($record): bool
+    {
+        return Auth::user()?->can('update roles', $record);
+    }
+
+    public static function canCreate(): bool
+    {
+        return Auth::user()?->can('create roles');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return Auth::user()?->can('update roles', $record);
+    }
 
     public static function form(Form $form): Form
     {
@@ -63,27 +84,6 @@ class RoleResource extends Resource
                             ->schema($permissionSections)
                     ]),
                 
-                Card::make()
-                    ->schema([
-                        Section::make('Create New Permission')
-                            ->schema([
-                                TextInput::make('new_permission')
-                                    ->label('Permission Name')
-                                    ->placeholder('create new-permission')
-                                    ->helperText('Format: [action] [module] (e.g. "create activities")'),
-                                    
-                                Forms\Components\Actions::make([
-                                    Forms\Components\Actions\Action::make('create_permission')
-                                        ->label('Add Permission')
-                                        ->action(function ($state, $set) {
-                                            if (!empty($state['new_permission'])) {
-                                                Permission::firstOrCreate(['name' => $state['new_permission']]);
-                                                $set('new_permission', '');
-                                            }
-                                        })
-                                ])
-                            ])
-                    ])
             ]);
     }
 
@@ -122,6 +122,7 @@ class RoleResource extends Resource
                             throw new \Exception('System roles cannot be deleted');
                         }
                     }),
+                    
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

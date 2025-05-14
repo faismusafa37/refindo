@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Auth;
 
 class ActivityChart extends ChartWidget
 {
+     public static function canView(): bool
+    {
+        return auth()->check() && auth()->user()->can('view activities');
+    }
     protected static ?string $heading = 'Total Jumlah Perbaikan Per Bulan';
 
     protected static ?int $sort = 2;

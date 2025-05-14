@@ -22,24 +22,24 @@ class EditUser extends EditRecord
     /**
      * Saat data diisi ke form (untuk pre-fill)
      */
-    protected function mutateFormDataBeforeSave(array $data): array
-    {
-        $role = Role::find($data['role_id'] ?? null);
+    // protected function mutateFormDataBeforeSave(array $data): array
+    // {
+    //     $role = Role::find($data['role_id'] ?? null);
         
-        if ($role) {
-            // Simpan role_name agar disinkronkan nanti
-            $this->roleNameToSync = $role->name;
-        }
+    //     if ($role) {
+    //         // Simpan role_name agar disinkronkan nanti
+    //         $this->roleNameToSync = $role->name;
+    //     }
     
-        return $data;
-    }
+    //     return $data;
+    // }
     
-    protected function afterSave(): void
-    {
-        if (isset($this->roleNameToSync)) {
-            $this->record->syncRoles([$this->roleNameToSync]);
-        }
-    }
+    // protected function afterSave(): void
+    // {
+    //     if (isset($this->roleNameToSync)) {
+    //         $this->record->syncRoles([$this->roleNameToSync]);
+    //     }
+    // }
 
     protected function getRedirectUrl(): string
     {

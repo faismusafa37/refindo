@@ -64,32 +64,9 @@ class User extends Authenticatable
     // ====================
     // OVERRIDE assignRole AGAR MENGISI role_type
     // ====================
-    public function assignRole(...$roles)
-    {
-        parent::assignRole(...$roles);
-
-        if (count($roles) > 0) {
-            $firstRole = is_array($roles[0]) ? $roles[0][0] : $roles[0];
-            $this->role_type = is_string($firstRole) ? $firstRole : $firstRole->name;
-            $this->save();
-        }
-
-        return $this;
-    }
+    
 
     // ====================
     // OVERRIDE syncRoles AGAR MENGISI role_type
     // ====================
-    public function syncRoles(...$roles)
-    {
-        parent::syncRoles(...$roles);
-
-        if (count($roles) > 0) {
-            $firstRole = is_array($roles[0]) ? $roles[0][0] : $roles[0];
-            $this->role_type = is_string($firstRole) ? $firstRole : $firstRole->name;
-            $this->save();
-        }
-
-        return $this;
-    }
 }

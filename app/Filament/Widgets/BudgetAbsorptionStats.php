@@ -25,12 +25,12 @@ class BudgetAbsorptionStats extends StatsOverviewWidget
 
     public static function canView(): bool
     {
-        return auth()->check() && auth()->user()->hasAnyRole(['admin', 'user']);
+        return auth()->check() && auth()->user()->can('view budget absorption');
     }
 
     protected function hasFiltersForm(): bool
     {
-        return auth()->user()->hasAnyRole(['admin', 'user']);
+        return auth()->user()->can('view budget absorption');
     }
 
     public function filtersForm(Form $form): Form

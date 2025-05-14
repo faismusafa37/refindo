@@ -51,7 +51,8 @@ class ActivityResource extends Resource
                             ->prefix('Rp')
                             ->required()
                             ->reactive()
-                            ->afterStateUpdated(fn ($state, callable $set, callable $get) =>
+                            ->afterStateUpdated(
+                                fn($state, callable $set, callable $get) =>
                                 $set('total_price', ($state ?? 0) + ($get('price_stock') ?? 0))
                             ),
                         Forms\Components\Select::make('project_id')
@@ -92,7 +93,8 @@ class ActivityResource extends Resource
                             ->prefix('Rp')
                             ->required()
                             ->reactive()
-                            ->afterStateUpdated(fn ($state, callable $set, callable $get) =>
+                            ->afterStateUpdated(
+                                fn($state, callable $set, callable $get) =>
                                 $set('total_price', ($state ?? 0) + ($get('price') ?? 0))
                             ),
                         Forms\Components\TextInput::make('final_stock')
@@ -162,7 +164,7 @@ class ActivityResource extends Resource
                     ]),
 
                 Forms\Components\Hidden::make('user_id')
-                    ->default(fn () => Auth::check() ? Auth::id() : null)
+                    ->default(fn() => Auth::check() ? Auth::id() : null)
                     ->required(),
             ]);
     }
@@ -193,21 +195,21 @@ class ActivityResource extends Resource
                 }),
 
                 Tables\Columns\ImageColumn::make('photo_1')->label('Foto Before')
-                    ->url(fn ($record) => $record->photo_1 ? asset('storage/' . $record->photo_1) : null)
+                    ->url(fn($record) => $record->photo_1 ? asset('storage/' . $record->photo_1) : null)
                     ->openUrlInNewTab(),
 
                 Tables\Columns\ImageColumn::make('photo_2')->label('Foto On Going')
-                    ->url(fn ($record): string|null => $record->photo_2 ? asset('storage/' . $record->photo_2) : null)
+                    ->url(fn($record): string|null => $record->photo_2 ? asset('storage/' . $record->photo_2) : null)
                     ->openUrlInNewTab(),
 
                 Tables\Columns\ImageColumn::make('photo_3')->label('Foto After')
-                    ->url(fn ($record) => $record->photo_3 ? asset('storage/' . $record->photo_3) : null)
+                    ->url(fn($record) => $record->photo_3 ? asset('storage/' . $record->photo_3) : null)
                     ->openUrlInNewTab(),
 
                 Tables\Columns\TextColumn::make('bast_document')
                     ->label('BAST Document')
-                    ->formatStateUsing(fn ($state) => 'Download')
-                    ->url(fn ($record) => $record && $record->bast_document
+                    ->formatStateUsing(fn($state) => 'Download')
+                    ->url(fn($record) => $record && $record->bast_document
                         ? asset('storage/' . $record->bast_document)
                         : null)
                     ->openUrlInNewTab()
@@ -219,35 +221,35 @@ class ActivityResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status_group')
-                ->label('Status')
-                ->options([
-                    'on_going' => 'On Progress & Pending',
-                    'rfu' => 'RFU (Selesai)',
-                ])
-                ->query(function ($query, $data) {
-                    if (!empty($data['value'])) {
-                        if ($data['value'] === 'on_going') {
-                            $query->whereIn('status', ['in progress', 'pending']);
-                        } elseif ($data['value'] === 'rfu') {
-                            $query->where('status', 'like', '%RFU%');
+                    ->label('Status')
+                    ->options([
+                        'on_going' => 'On Progress & Pending',
+                        'rfu' => 'RFU (Selesai)',
+                    ])
+                    ->query(function ($query, $data) {
+                        if (!empty($data['value'])) {
+                            if ($data['value'] === 'on_going') {
+                                $query->whereIn('status', ['in progress', 'pending']);
+                            } elseif ($data['value'] === 'rfu') {
+                                $query->where('status', 'like', '%RFU%');
+                            }
                         }
-                    }
-                })
-                ->indicateUsing(function ($data) {
-                    if (!empty($data['value'])) {
-                        if ($data['value'] === 'on_going') {
-                            return 'Status: On Going';
-                        } elseif ($data['value'] === 'rfu') {
-                            return 'Status: RFU';
+                    })
+                    ->indicateUsing(function ($data) {
+                        if (!empty($data['value'])) {
+                            if ($data['value'] === 'on_going') {
+                                return 'Status: On Going';
+                            } elseif ($data['value'] === 'rfu') {
+                                return 'Status: RFU';
+                            }
                         }
-                    }
-                    return null;
-                })
-                    
+                        return null;
+                    })
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                ->visible(fn (Activity $record): bool => auth()->user()->can('update activities')),
+                    ->visible(fn(Activity $record): bool => auth()->user()->can('update activities')),
             ])
             ->headerActions([
                 ExportAction::make()
@@ -257,53 +259,36 @@ class ActivityResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
-                ->visible(fn () => auth()->user()->can('delete activities')),
+                    ->visible(fn() => auth()->user()->can('delete activities')),
             ]);
     }
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
-{
-    $query = parent::getEloquentQuery();
+    {
+        $query = parent::getEloquentQuery();
 
-    if (Auth::check()) {
-        $user = Auth::user();
-        Log::info('logged in', [$user]);
-        if ($user->hasRole('DLH')) {
-            Log::info('role DLH', [$user->roles]);
-            if ($user->project_id) {
-                return $query->where('project_id', $user->project_id);
-            } else {
-                // DLH tanpa project_id -> tidak bisa lihat data
-                return $query->whereRaw('1 = 0');
+        if (Auth::check()) {
+            $user = Auth::user();
+            Log::info('logged in', [$user]);
+            if ($user->hasRole('DLH')) {
+                Log::info('role DLH', [$user->roles]);
+                if ($user->project_id) {
+                    return $query->where('project_id', $user->project_id);
+                } else {
+                    // DLH tanpa project_id -> tidak bisa lihat data
+                    return $query->whereRaw('1 = 0');
+                }
             }
+            Log::info('role not DLH', [$user->roles]);
+
+            // Admin dan role lain bisa lihat semua data
+            return $query;
         }
-        Log::info('role not DLH', [$user->roles]);
+        Log::info('not logged in', []);
 
-        // Admin dan role lain bisa lihat semua data
-        return $query;
+        // Kalau tidak login, tidak bisa lihat data
+        return $query->whereRaw('1 = 0');
     }
-    Log::info('not logged in', []);
-
-    // Kalau tidak login, tidak bisa lihat data
-    return $query->whereRaw('1 = 0');
-}
-
-
-
-public static function canCreate(): bool
-{
-    return auth()->user()?->can('create activities');
-}
-
-public static function canEdit($record): bool
-{
-    return auth()->user()?->can('update activities');
-}
-
-public static function canDelete($record): bool
-{
-    return auth()->user()?->can('delete activities');
-}
 
 
     public static function getPages(): array

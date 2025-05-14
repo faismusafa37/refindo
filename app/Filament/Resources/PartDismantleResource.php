@@ -25,9 +25,29 @@ class PartDismantleResource extends Resource
 
     public static function canAccess(): bool
     {
-        // Cek role user, kalau DLH resource ini tidak bisa diakses
-        return !Auth::user()?->hasRole('DLH');
+        return Auth::user()?->can('view part dismantle');
     }
+
+    public static function canCreate(): bool
+    {
+        return Auth::user()?->can('create part dismantle');
+    }
+
+    public static function canView($record): bool
+    {
+        return Auth::user()?->can('update part dismantle', $record);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return Auth::user()?->can('update part dismantle', $record);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Auth::user()?->can('delete part dismantle', $record);
+    }
+
 
     public static function form(Form $form): Form
     {
@@ -84,6 +104,8 @@ class PartDismantleResource extends Resource
             //
         ];
     }
+
+    
 
     public static function getPages(): array
     {

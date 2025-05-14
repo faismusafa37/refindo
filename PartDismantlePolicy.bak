@@ -1,0 +1,43 @@
+<?php
+namespace App\Policies;
+
+use App\Models\PartDismantle;
+use App\Models\User;
+
+class PartDismantlePolicy
+{
+    public function viewAnyDismantle(User $user): bool
+    {
+        return $user->can('view part dismantle');
+    }
+
+    public function viewDismantle(User $user, PartDismantle $partDismantle): bool
+    {
+        return $user->can('view part dismantle');
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->can('create part dismantle');
+    }
+
+    public function updateDismantle(User $user, PartDismantle $partDismantle): bool
+    {
+        return $user->can('update part dismantle');
+    }
+
+    public function delete(User $user, PartDismantle $partDismantle): bool
+    {
+        return $user->can('delete part dismantle');
+    }
+
+    public function restore(User $user, PartDismantle $partDismantle): bool
+    {
+        return $user->can('delete part dismantle');
+    }
+
+    public function forceDelete(User $user, PartDismantle $partDismantle): bool
+    {
+        return $user->can('delete part dismantle');
+    }
+}
