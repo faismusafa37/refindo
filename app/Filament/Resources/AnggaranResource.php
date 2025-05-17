@@ -25,92 +25,132 @@ class AnggaranResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     protected static ?string $navigationGroup = 'Finance';
 
-    // Hanya tampil di sidebar jika role Admin atau User
+    // Navigation visibility - check permissions
     public static function shouldRegisterNavigation(): bool
     {
+        return auth()->user()?->can('view anggaran'); // Hanya muncul jika punya akses resource
+    }
+
+    public static function canViewAny(): bool
+    {
+    return auth()->user()?->can('view anggaran');
+    }
+    // Resource access control
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->can('view anggaran');
+    }
+
+    // Record viewing permission
+    public static function canView($record): bool
+    {
         $user = auth()->user();
-
-        if (!$user) {
-            return false;
+        
+        // DLH hanya bisa melihat project mereka
+        if ($user->hasRole('dlh')) {
+            return $record->project_id === $user->project_id;
         }
-
+        
+        // Admin dan User bisa melihat semua
         return $user->hasRole(['admin', 'user']);
     }
 
-    public static function canAccess(): bool
-    {
-        return Auth::user()?->can('view anggaran');
-    }
-
-    public static function canView($record): bool
-    {
-        return Auth::user()?->can('update anggaran', $record);
-    }
-    
-
+    // Record editing permission
     public static function canEdit($record): bool
     {
-        return Auth::user()?->can('update anggaran', $record);
+        $user = auth()->user();
+        
+        // DLH hanya bisa edit project mereka
+        if ($user->hasRole('dlh')) {
+            return $record->project_id === $user->project_id;
+        }
+        
+        // Admin dan User bisa edit semua
+        return $user->hasRole(['admin', 'user']);
     }
 
+    // Record deletion permission
     public static function canDelete($record): bool
     {
-        return Auth::user()?->can('delete anggaran', $record);
+        return auth()->user()?->can('delete anggaran');
     }
 
-    public static function form(Form $form): Form
-    {
-        return $form->schema([
-            Section::make('Data Anggaran')
-                ->schema([
-                    Select::make('project_id')
-                        ->label('Wilayah / Project')
-                        ->options(Project::pluck('name', 'id'))
-                        ->required(),
+    // Record creation permission
+    public static function canCreate(): bool
+{
+    $user = auth()->user();
+    return $user->hasRole(['admin', 'user']); // DLH tidak bisa create
+}
 
-                    TextInput::make('current_amount')
-                        ->label('Nilai Anggaran Saat Ini')
-                        ->numeric()
-                        ->required(),
-                ])
+public static function form(Form $form): Form
+{
+    $user = auth()->user();
+    $projectOptions = Project::query();
+    
+    if ($user->hasRole('dlh') && $user->project_id) {
+        $projectOptions->where('id', $user->project_id);
+    }
+    
+    return $form->schema([
+        Section::make('Data Anggaran')->schema([
+            Select::make('project_id')
+                ->label('Wilayah / Project')
+                ->options($projectOptions->pluck('name', 'id'))
+                ->required()
+                ->disabled($user->hasRole('dlh')),
+                    
+                TextInput::make('current_amount')
+                    ->label('Nilai Anggaran Saat Ini')
+                    ->numeric()
+                    ->required(),
+            ])
         ]);
     }
 
     public static function table(Table $table): Table
     {
-        $action1 = [];
-        $action2 = [];
-
-        if (Auth::user()?->can('update anggaran')) {
-            Log::info('can access');
-            $action1 = [
-                EditAction::make(),
-            ];
+        $user = auth()->user();
+        $query = Anggaran::query()->with(['project', 'histories']);
+        
+        // Filter khusus untuk DLH - hanya tampilkan project mereka
+        if ($user->hasRole('dlh') && $user->project_id) {
+            $query->where('project_id', $user->project_id);
         }
-        return $table->columns([
-            TextColumn::make('project.name')->label('Wilayah'),
-            TextColumn::make('current_amount')->label('Anggaran Saat Ini')->money('IDR', true),
-            TextColumn::make('updated_at')->label('Dibuat Tanggal/Waktu')->dateTime(),
+        
+        return $table
+            ->query($query)
+            ->columns([
+                TextColumn::make('project.name')
+                ->label('Wilayah')
+                ->hidden( $user->hasRole('dlh')),
+                    
+                TextColumn::make('current_amount')
+                    ->label('Anggaran Saat Ini')
+                    ->money('IDR', true),
+                    
+                TextColumn::make('updated_at')
+                    ->label('Dibuat Tanggal/Waktu')
+                    ->dateTime(),
 
-            TextColumn::make('histories')
-                ->label('History Perubahan')
-                ->getStateUsing(function ($record) {
-                    $lastHistory = $record->histories()->latest()->first();
-                    if ($lastHistory) {
-                        $previousAmount = number_format($lastHistory->previous_amount, 0, ',', '.');
-                        $currentAmount = number_format($lastHistory->current_amount, 0, ',', '.');
-                        $changedAt = $lastHistory->changed_at
-                            ? Carbon::parse($lastHistory->changed_at)->format('d-m-Y H:i')
-                            : 'Tanggal tidak tersedia';
+                TextColumn::make('histories')
+                    ->label('History Perubahan')
+                    ->getStateUsing(function ($record) {
+                        $lastHistory = $record->histories()->latest()->first();
+                        if ($lastHistory) {
+                            $previousAmount = number_format($lastHistory->previous_amount, 0, ',', '.');
+                            $currentAmount = number_format($lastHistory->current_amount, 0, ',', '.');
+                            $changedAt = $lastHistory->changed_at
+                                ? Carbon::parse($lastHistory->changed_at)->format('d-m-Y H:i')
+                                : 'Tanggal tidak tersedia';
 
-                        return "Sebelumnya: IDR {$previousAmount} → Sekarang: IDR {$currentAmount} pada {$changedAt}";
-                    }
-                    return 'Belum ada perubahan';
-                }),
-        ])
-            ->actions($action1)
+                            return "Sebelumnya: IDR {$previousAmount} → Sekarang: IDR {$currentAmount} pada {$changedAt}";
+                        }
+                        return 'Belum ada perubahan';
+                    }),
+            ])
             ->actions([
-                DeleteAction::make(),
+                EditAction::make()->hidden(fn($record) => !static::canEdit($record)),
+                DeleteAction::make()->hidden(fn($record) => !static::canDelete($record)),
             ]);
     }
 
@@ -139,10 +179,5 @@ class AnggaranResource extends Resource
                 ]);
             }
         });
-    }
-
-    public static function canCreate(): bool
-    {
-        return auth()->user()?->can('create anggaran');
     }
 }

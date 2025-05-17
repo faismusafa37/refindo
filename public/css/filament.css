@@ -1,23 +1,39 @@
-/* Menambahkan background pada fi-main di halaman dashboard */
-.fi-main-ctn {
-    background-image: url('/images/keruk.jpg'); /* Pastikan gambar ada di public/images */
-    background-size: cover; /* Menyesuaikan gambar dengan ukuran kontainer */
-    background-repeat: no-repeat; /* Menghindari pengulangan gambar */
-    background-position: center; /* Menempatkan gambar di tengah */
-    background-color: rgba(255, 255, 255, 2);
-    min-height: 100vh; /* Pastikan gambar memenuhi seluruh tinggi layar */
+
+
+.fi-main {
+    position: relative;
+    min-height: 100vh;
 }
 
-/* Fallback background untuk body */
-body {
-    background-color: #f8fafc; /* Warna fallback jika gambar tidak ditampilkan */
-}
-
-.fi-main-ctn::after {
+.fi-main::before {
     content: '';
     position: absolute;
-    inset: 0;
-    background-color: rgba(255, 255, 255, 0.1); /* Terang transparan */
-    z-index: 0; /* Lebih rendah dari semua konten */
-    pointer-events: none; /* Penting: tidak memblok klik */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/images/keruk.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.3; /* Mengurangi opacity background */
+    z-index: -1; /* Pastikan di belakang konten */
 }
+
+.fi-main > * {
+    position: relative;
+    z-index: 1; /* Pastikan konten di atas background */
+}
+
+/* Meningkatkan kontras teks */
+.fi-card,
+.fi-modal,
+.fi-tables-table,
+.fi-tables-header,
+.fi-tables-container {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(2px);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+

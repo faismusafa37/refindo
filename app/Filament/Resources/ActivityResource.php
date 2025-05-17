@@ -44,7 +44,14 @@ class ActivityResource extends Resource
                         Forms\Components\DateTimePicker::make('time_in')->label('Time In')->required(),
                         Forms\Components\DateTimePicker::make('time_out')->label('Time Out')->required(),
                         Forms\Components\TextInput::make('hour_meter')->label('Hour Meter (KM Mobil)')->numeric()->required(),
-                        Forms\Components\TextInput::make('status')->label('Status')->required(),
+                        Forms\Components\Select::make('status')
+                        ->label('Status')
+                        ->options([
+                            'in progress' => 'In Progress',
+                            'RFU' => 'RFU Selesai',
+                        ])
+                        ->required()
+                            ->required(),
                         Forms\Components\TextInput::make('price')
                             ->label('Price')
                             ->numeric()
@@ -181,7 +188,14 @@ class ActivityResource extends Resource
                 Tables\Columns\TextColumn::make('time_in')->label('Time In')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('time_out')->label('Time Out')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('hour_meter')->label('Hour Meter')->sortable(),
-                Tables\Columns\TextColumn::make('status')->label('Status')->sortable(),
+                Tables\Columns\TextColumn::make('status')
+                ->label('Status')
+                ->badge()
+                ->color(fn (string $state): string => match ($state) {
+                    'in progress' => 'warning',
+                    'RFU' => 'success',
+                    default => 'primary',
+                }),
                 Tables\Columns\TextColumn::make('project.name')->label('Project'),
                 Tables\Columns\TextColumn::make('price')->label('Price')->money('idr')->sortable(false),
                 Tables\Columns\TextColumn::make('price_stock')->label('Price Stock')->money('idr')->sortable(false),
@@ -220,31 +234,14 @@ class ActivityResource extends Resource
                 Tables\Columns\TextColumn::make('user.name')->label('User')->sortable(),
             ])
             ->filters([
-                SelectFilter::make('status_group')
-                    ->label('Status')
-                    ->options([
-                        'on_going' => 'On Progress & Pending',
-                        'rfu' => 'RFU (Selesai)',
-                    ])
-                    ->query(function ($query, $data) {
-                        if (!empty($data['value'])) {
-                            if ($data['value'] === 'on_going') {
-                                $query->whereIn('status', ['in progress', 'pending']);
-                            } elseif ($data['value'] === 'rfu') {
-                                $query->where('status', 'like', '%RFU%');
-                            }
-                        }
-                    })
-                    ->indicateUsing(function ($data) {
-                        if (!empty($data['value'])) {
-                            if ($data['value'] === 'on_going') {
-                                return 'Status: On Going';
-                            } elseif ($data['value'] === 'rfu') {
-                                return 'Status: RFU';
-                            }
-                        }
-                        return null;
-                    })
+                Tables\Filters\SelectFilter::make('status')
+                ->label('Status')
+                ->options([
+                    'in progress' => 'In Progress',
+                    'RFU' => 'RFU Selesai',
+                ]),
+
+                
 
             ])
             ->actions([

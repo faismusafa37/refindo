@@ -48,6 +48,8 @@ class RolePermissionSeeder extends Seeder
             'delete users',
 
             'view budget absorption',
+
+            'view budget stats',
         ];
         
 
@@ -69,11 +71,22 @@ class RolePermissionSeeder extends Seeder
             'create activities', 
             'update activities',
             'view activities',
+            'view anggaran',
+            'update anggaran',
+            'view stock opname',
+            'create stock opname',
+            'update stock opname',
+            'view part dismantle',
+            'create part dismantle',
+            'update part dismantle',
+            'view budget stats',
+            
         ]);
     
         // DLH hanya bisa melihat aktivitas
         $dlh->syncPermissions([
             'view activities',
+            'view budget stats',
         ]);
     }
 }

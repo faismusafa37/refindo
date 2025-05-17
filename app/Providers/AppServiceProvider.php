@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Filament\Resources\AnggaranResource;
+use Filament\Facades\Filament;
+use Filament\Navigation\NavigationGroup;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentView;
 
@@ -31,5 +34,14 @@ class AppServiceProvider extends ServiceProvider
             'panels::body.start', // Menambahkan class ke body
             fn () => '<script>document.body.classList.add("dashboard-page")</script>'
         );
+
+        Filament::serving(function () {
+            // Hapus item navigasi untuk DLH
+            if (auth()->check() && auth()->user()->hasRole('dlh')) {
+                Filament::forgetNavigationItems([
+                    AnggaranResource::class,
+                ]);
+            }
+        });
     }
 }

@@ -14,30 +14,30 @@ use Filament\Forms\Components\Select;
 
 class BudgetStats extends TableWidget
 {
-
     protected int|string|array $columnSpan = 'full';
     protected static ?string $heading = 'Anggaran Tahun';
 
-    // Mengatur visibilitas widget berdasarkan role
-     public static function canView(): bool
+    public static function canView(): bool
     {
-        return auth()->check() && auth()->user()->can('view anggaran');
+    return auth()->user()?->can('view budget stats');
     }
 
-    // Mendapatkan query untuk tabel berdasarkan project yang terkait
-    public function getTableQuery(): Builder
-{
-    return Anggaran::query()->with('project');
-}
 
-    // Menentukan kolom-kolom yang ditampilkan di tabel
+    public function getTableQuery(): Builder
+    {
+        $query = Anggaran::query()->with('project');
+        
+        // Jika user memiliki project_id (DLH atau yang terasosiasi dengan project)
+        if (Auth::user()->project_id) {
+            $query->where('project_id', Auth::user()->project_id);
+        }
+        
+        return $query;
+    }
+
     protected function getTableColumns(): array
     {
-        return [
-            TextColumn::make('project.name')
-                ->label('Wilayah / Project')
-                ->wrap(),
-
+        $columns = [
             TextColumn::make('current_amount')
                 ->label('Anggaran Saat Ini')
                 ->money('IDR', true),
@@ -46,15 +46,22 @@ class BudgetStats extends TableWidget
                 ->label('Diberikan Pada')
                 ->dateTime('d M Y'),
         ];
+
+        // Hanya tampilkan kolom project jika user bisa melihat semua project
+        if (Auth::user()->can('view all projects')) {
+            array_unshift($columns, 
+                TextColumn::make('project.name')
+                    ->label('Wilayah / Project')
+                    ->wrap()
+            );
+        }
+
+        return $columns;
     }
 
-    // Menentukan filter-filter yang ditampilkan di tabel
     protected function getTableFilters(): array
     {
-        $user = Auth::user();
-
-        return [
-            // Filter gabungan "Dibuat Pada" (Tahun dan Bulan)
+        $filters = [
             Filter::make('created_at')
                 ->label('Dibuat Pada')
                 ->form([
@@ -86,13 +93,15 @@ class BudgetStats extends TableWidget
 
                     return $query;
                 }),
-
-            // Filter project_id untuk Admin dan User
-            SelectFilter::make('project_id')
-                ->label('Wilayah / Project')
-                ->options(Project::pluck('name', 'id'))
-                // Menampilkan filter project_id hanya untuk Admin dan User
-                ->hidden(! $user->hasRole('admin') && ! $user->hasRole('user')),
         ];
+
+        // Hanya tampilkan filter project jika user bisa melihat semua project
+        if (Auth::user()->can('view all projects')) {
+            $filters[] = SelectFilter::make('project_id')
+                ->label('Wilayah / Project')
+                ->options(Project::pluck('name', 'id'));
+        }
+
+        return $filters;
     }
 }
