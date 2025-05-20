@@ -21,7 +21,7 @@ use Illuminate\Session\Middleware\StartSession;
 use App\Filament\Resources\AnggaranResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\CustomBackgroundPlugin;
-
+use App\Filament\Widgets\BudgetAbsorptionStats;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -49,7 +49,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 \App\Filament\Widgets\ActivityChart::class,
-                \App\Filament\Widgets\BudgetAbsorptionStats::class,
+            BudgetAbsorptionStats::class,
                 \App\Filament\Widgets\RFUCompletedStats::class,
                 \App\Filament\Widgets\BudgetStats::class,
                 \App\Filament\Widgets\RunningActivities::class,

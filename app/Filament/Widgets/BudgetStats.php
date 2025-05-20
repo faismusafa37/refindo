@@ -38,6 +38,10 @@ class BudgetStats extends TableWidget
     protected function getTableColumns(): array
     {
         $columns = [
+            TextColumn::make('project.name')
+            ->label('Wilayah')
+            ->wrap(),
+
             TextColumn::make('current_amount')
                 ->label('Anggaran Saat Ini')
                 ->money('IDR', true),
@@ -60,48 +64,47 @@ class BudgetStats extends TableWidget
     }
 
     protected function getTableFilters(): array
-    {
-        $filters = [
-            Filter::make('created_at')
-                ->label('Dibuat Pada')
-                ->form([
-                    Select::make('year')
-                        ->label('Tahun')
-                        ->options(
-                            collect(range(now()->year, now()->year - 5))
-                                ->mapWithKeys(fn ($y) => [$y => $y])
-                                ->toArray()
-                        ),
+{
+    $filters = [
+        Filter::make('created_at')
+            ->label('Dibuat Pada')
+            ->form([
+                Select::make('year')
+                    ->label('Tahun')
+                    ->options(
+                        collect(range(now()->year, now()->year - 5))
+                            ->mapWithKeys(fn ($y) => [$y => $y])
+                            ->toArray()
+                    ),
+                Select::make('month')
+                    ->label('Bulan')
+                    ->options([
+                        '1' => 'Januari', '2' => 'Februari', '3' => 'Maret',
+                        '4' => 'April', '5' => 'Mei', '6' => 'Juni',
+                        '7' => 'Juli', '8' => 'Agustus', '9' => 'September',
+                        '10' => 'Oktober', '11' => 'November', '12' => 'Desember',
+                    ]),
+            ])
+            ->query(function (Builder $query, array $data) {
+                if (!empty($data['year'])) {
+                    $query->whereYear('updated_at', $data['year']);
+                }
 
-                    Select::make('month')
-                        ->label('Bulan')
-                        ->options([
-                            '1' => 'Januari', '2' => 'Februari', '3' => 'Maret',
-                            '4' => 'April', '5' => 'Mei', '6' => 'Juni',
-                            '7' => 'Juli', '8' => 'Agustus', '9' => 'September',
-                            '10' => 'Oktober', '11' => 'November', '12' => 'Desember',
-                        ]),
-                ])
-                ->query(function (Builder $query, array $data) {
-                    if (!empty($data['year'])) {
-                        $query->whereYear('updated_at', $data['year']);
-                    }
+                if (!empty($data['month'])) {
+                    $query->whereMonth('updated_at', $data['month']);
+                }
 
-                    if (!empty($data['month'])) {
-                        $query->whereMonth('updated_at', $data['month']);
-                    }
+                return $query;
+            }),
+    ];
 
-                    return $query;
-                }),
-        ];
-
-        // Hanya tampilkan filter project jika user bisa melihat semua project
-        if (Auth::user()->can('view all projects')) {
-            $filters[] = SelectFilter::make('project_id')
-                ->label('Wilayah / Project')
-                ->options(Project::pluck('name', 'id'));
-        }
-
-        return $filters;
+    // Hanya tampilkan filter project jika user bisa melihat semua project DAN tidak memiliki project_id
+    if (Auth::user()->can('view all projects') && !Auth::user()->project_id) {
+        $filters[] = SelectFilter::make('project_id')
+            ->label('Wilayah / Project')
+            ->options(Project::pluck('name', 'id'));
     }
+
+    return $filters;
+}
 }
