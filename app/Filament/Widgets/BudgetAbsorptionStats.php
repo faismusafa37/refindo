@@ -4,111 +4,79 @@ namespace App\Filament\Widgets;
 
 use App\Models\Anggaran;
 use App\Models\Activity;
-use App\Models\Project;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
 use Filament\Widgets\StatsOverviewWidget\Card;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class BudgetAbsorptionStats extends StatsOverviewWidget
 {
     use InteractsWithPageFilters;
 
-    protected static bool $isLazy = false;
-    protected static ?int $sort = -1;
-    protected static ?string $pollingInterval = '30s';
+    protected static ?string $pollingInterval = null;
+    protected static bool $isLazy = false; 
 
     public static function canView(): bool
     {
-        return auth()->check() && auth()->user()->can('view budget absorption');
-    }
-
-    protected function hasFiltersForm(): bool
-    {
-        return auth()->user()->can('view budget absorption');
-    }
-
-    public function filtersForm(Form $form): Form
-    {
-        return $form->schema([
-            Select::make('project_id')
-                ->label('Pilih Wilayah')
-                ->options(function () {
-                    return Project::orderBy('name')->pluck('name', 'id');
-                })
-                ->placeholder('-- Pilih Wilayah --')
-                ->searchable()
-                ->live()
-                ->debounce(500)
-                ->afterStateUpdated(function () {
-                    $this->clearCache();
-                }),
-        ]);
+    return auth()->user()?->can('view budget absorption');
     }
 
     protected function getCards(): array
     {
-        $projectId = $this->filters['project_id'] ?? null;
+        $projectId = $this->getProjectId();
         
-        // Return empty array if no project selected
+        // Jika tidak ada project_id, kembalikan array kosong
         if (!$projectId) {
             return [];
         }
 
-        try {
-            $cacheKey = "budget_stats_{$projectId}_" . Auth::id();
-            $data = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($projectId) {
-                $budget = Anggaran::where('project_id', $projectId)
-                    ->select(DB::raw('COALESCE(SUM(current_amount), 0) as total'))
-                    ->first();
-
-                $used = Activity::where('project_id', $projectId)
-                    ->select(DB::raw('COALESCE(SUM(price), 0) as total'))
-                    ->first();
-
-                return [
-                    'total_budget' => $budget->total,
-                    'total_used' => $used->total,
-                    'remaining' => $budget->total - $used->total
-                ];
-            });
-
+        $cacheKey = 'budget_stats_'.$projectId.'_'.Auth::id();
+        
+        $data = Cache::remember($cacheKey, now()->addMinutes(15), function () use ($projectId) {
+            $totalBudget = Anggaran::where('project_id', $projectId)->sum('current_amount') ?? 0;
+            $totalUsed = Activity::where('project_id', $projectId)->sum('price') ?? 0;
+            
             return [
-                Card::make('Total Anggaran', 'Rp ' . number_format($data['total_budget'], 0, ',', '.'))
-                    ->description('Jumlah anggaran tersedia')
-                    ->descriptionIcon('heroicon-o-banknotes')
-                    ->color('primary'),
-
-                Card::make('Penyerapan Anggaran', 'Rp ' . number_format($data['total_used'], 0, ',', '.'))
-                    ->description('Biaya yang sudah terserap')
-                    ->descriptionIcon('heroicon-o-chart-bar')
-                    ->color('success'),
-
-                Card::make('Sisa Anggaran', 'Rp ' . number_format($data['remaining'], 0, ',', '.'))
-                    ->description('Anggaran yang tersisa')
-                    ->descriptionIcon('heroicon-o-currency-dollar')
-                    ->color($data['remaining'] < 0 ? 'danger' : 'warning'),
+                'total_budget' => $totalBudget,
+                'total_used' => $totalUsed,
+                'remaining' => $totalBudget - $totalUsed
             ];
-        } catch (\Exception $e) {
-            Log::error('Error loading budget stats: ' . $e->getMessage());
-            return [
-                Card::make('Error', 'Gagal memuat data')
-                    ->color('danger')
-            ];
+        });
+
+        // Jika data tidak valid, kembalikan array kosong
+        if (!isset($data['total_budget']) || !isset($data['total_used'])) {
+            return [];
         }
+
+        return [
+            Card::make('Total Anggaran', 'Rp '.number_format($data['total_budget'], 0, ',', '.'))
+                ->description('Jumlah anggaran tersedia')
+                ->descriptionIcon('heroicon-o-banknotes')
+                ->color('primary'),
+
+            Card::make('Penyerapan Anggaran', 'Rp '.number_format($data['total_used'], 0, ',', '.'))
+                ->description('Biaya yang sudah terserap')
+                ->descriptionIcon('heroicon-o-chart-bar')
+                ->color('success'),
+
+            Card::make('Sisa Anggaran', 'Rp '.number_format($data['remaining'], 0, ',', '.'))
+                ->description('Anggaran yang tersisa')
+                ->descriptionIcon('heroicon-o-currency-dollar')
+                ->color($data['remaining'] < 0 ? 'danger' : 'warning')
+        ];
     }
 
-    protected function clearCache(): void
+    protected function getProjectId()
     {
-        $projectId = $this->filters['project_id'] ?? null;
-        if ($projectId) {
-            $cacheKey = "budget_stats_{$projectId}_" . Auth::id();
-            Cache::forget($cacheKey);
+        $user = Auth::user();
+        
+        // Untuk DLH, gunakan project_id mereka
+        if ($user->hasRole('DLH')) {
+            return $user->project_id;
         }
+        
+        // Untuk non-DLH, gunakan filter jika ada
+        return $this->filters['project_id'] ?? null;
     }
 }

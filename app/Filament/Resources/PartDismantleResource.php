@@ -49,32 +49,41 @@ class PartDismantleResource extends Resource
     }
 
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('part_number')
-                    ->label('Part Number')
-                    ->required()
-                    ->maxLength(255),
-
-                Forms\Components\TextInput::make('description')
-                    ->label('Description')
-                    ->required()
-                    ->maxLength(255),
-
-                Forms\Components\TextInput::make('stock_dismantle')
-                    ->label('Stock Dismantle')
-                    ->required()
-                    ->numeric(),
-
-                Forms\Components\TextInput::make('no_tiket')
-                    ->label('No. Tiket')
-                    ->required()
-                    ->maxLength(255),
-            ]);
-    }
-
+   public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Forms\Components\Section::make('Part Information')
+                ->schema([
+                    Forms\Components\Grid::make(2)
+                        ->schema([
+                            Forms\Components\TextInput::make('part_number')
+                                ->label('Part Number')
+                                ->required()
+                                ->maxLength(255),
+                                
+                            Forms\Components\TextInput::make('no_tiket')
+                                ->label('No. Tiket')
+                                ->required()
+                                ->maxLength(255),
+                        ]),
+                        
+                    Forms\Components\TextInput::make('description')
+                        ->label('Description')
+                        ->required()
+                        ->maxLength(255)
+                        ->columnSpanFull(),
+                        
+                    Forms\Components\TextInput::make('stock_dismantle')
+                        ->label('Stock Dismantle')
+                        ->required()
+                        ->numeric()
+                        ->columnSpanFull(),
+                ])
+                ->columns(2)
+                ->collapsible(),
+        ]);
+}
     public static function table(Table $table): Table
     {
         return $table

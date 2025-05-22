@@ -22,6 +22,8 @@ use App\Filament\Resources\AnggaranResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\CustomBackgroundPlugin;
 use App\Filament\Widgets\BudgetAbsorptionStats;
+use Filament\Actions\Export\FilamentExportPlugin;
+
 
 class AdminPanelProvider extends PanelProvider
 {

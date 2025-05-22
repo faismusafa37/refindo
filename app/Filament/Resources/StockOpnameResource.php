@@ -45,54 +45,65 @@ class StockOpnameResource extends Resource
     }
 
     public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('part_number')
-                    ->label('Part Number')
-                    ->required()
-                    ->maxLength(255),
-
-                Forms\Components\TextInput::make('part_name')
-                    ->label('Part Name')
-                    ->required()
-                    ->maxLength(255),
-
-                Forms\Components\TextInput::make('stock_in')
-                    ->label('Stock In')
-                    ->numeric()
-                    ->required()
-                    ->afterStateUpdated(function (callable $set, $state, $get) {
-                        $stockOut = $get('stock_out') ?? 0;
-                        $set('final_stock', ($state ?? 0) - $stockOut);
-                    }),
-
-                Forms\Components\TextInput::make('stock_out')
-                    ->label('Stock Out')
-                    ->numeric()
-                    ->required()
-                    ->afterStateUpdated(function (callable $set, $state, $get) {
-                        $stockIn = $get('stock_in') ?? 0;
-                        $set('final_stock', $stockIn - ($state ?? 0));
-                    }),
-
-                Forms\Components\TextInput::make('final_stock')
-                    ->label('Final Stock')
-                    ->numeric()
-                    ->disabled()
-                    ->dehydrated(false)
-                    ->default(0),
-
-                Forms\Components\Textarea::make('description')
-                    ->label('Description')
-                    ->maxLength(500),
-
-                Hidden::make('user_id')
-                    ->default(fn () => Auth::check() ? Auth::id() : null)
-                    ->required(),
-            ]);
-    }
-
+{
+    return $form
+        ->schema([
+            Forms\Components\Section::make('Stock Information')
+                ->schema([
+                    Forms\Components\Grid::make(2)
+                        ->schema([
+                            Forms\Components\TextInput::make('part_number')
+                                ->label('Part Number')
+                                ->required()
+                                ->maxLength(255),
+                                
+                            Forms\Components\TextInput::make('part_name')
+                                ->label('Part Name')
+                                ->required()
+                                ->maxLength(255),
+                        ]),
+                        
+                    Forms\Components\Grid::make(3)
+                        ->schema([
+                            Forms\Components\TextInput::make('stock_in')
+                                ->label('Stock In')
+                                ->numeric()
+                                ->required()
+                                ->afterStateUpdated(function (callable $set, $state, $get) {
+                                    $stockOut = $get('stock_out') ?? 0;
+                                    $set('final_stock', ($state ?? 0) - $stockOut);
+                                }),
+                                
+                            Forms\Components\TextInput::make('stock_out')
+                                ->label('Stock Out')
+                                ->numeric()
+                                ->required()
+                                ->afterStateUpdated(function (callable $set, $state, $get) {
+                                    $stockIn = $get('stock_in') ?? 0;
+                                    $set('final_stock', $stockIn - ($state ?? 0));
+                                }),
+                                
+                            Forms\Components\TextInput::make('final_stock')
+                                ->label('Final Stock')
+                                ->numeric()
+                                ->disabled()
+                                ->dehydrated(false)
+                                ->default(0),
+                        ]),
+                        
+                    Forms\Components\Textarea::make('description')
+                        ->label('Description')
+                        ->maxLength(500)
+                        ->columnSpanFull(),
+                        
+                    Forms\Components\Hidden::make('user_id')
+                        ->default(fn () => Auth::check() ? Auth::id() : null)
+                        ->required(),
+                ])
+                ->columns(2)
+                ->collapsible(),
+        ]);
+}
     public static function table(Table $table): Table
     {
         return $table
