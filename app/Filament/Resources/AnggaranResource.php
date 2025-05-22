@@ -58,15 +58,7 @@ class AnggaranResource extends Resource
     // Record editing permission
     public static function canEdit($record): bool
     {
-        $user = auth()->user();
-        
-        // DLH hanya bisa edit project mereka
-        if ($user->hasRole('dlh')) {
-            return $record->project_id === $user->project_id;
-        }
-        
-        // Admin dan User bisa edit semua
-        return $user->hasRole(['admin', 'user']);
+        return auth()->user()?->can('update anggaran');
     }
 
     // Record deletion permission
@@ -77,10 +69,9 @@ class AnggaranResource extends Resource
 
     // Record creation permission
     public static function canCreate(): bool
-{
-    $user = auth()->user();
-    return $user->hasRole(['admin', 'user']); // DLH tidak bisa create
-}
+    {
+        return Auth::user()?->can('create anggaran');
+    }
 
 public static function form(Form $form): Form
 {
@@ -108,46 +99,49 @@ public static function form(Form $form): Form
     }
 
     public static function table(Table $table): Table
-    {
-        $user = auth()->user();
-        $query = Anggaran::query()->with(['project', 'histories']);
-        
-        // Filter khusus untuk DLH - hanya tampilkan project mereka
-        if ($user->hasRole('dlh') && $user->project_id) {
-            $query->where('project_id', $user->project_id);
-        }
-        
-        return $table
-            ->query($query)
-            ->columns([
-                TextColumn::make('project.name')
+{
+    $user = auth()->user();
+    
+    return $table
+        ->query(function () use ($user) {
+            $query = Anggaran::query()->with(['project', 'histories']);
+            
+            // Jika user memiliki project_id DAN bukan admin/superadmin
+            if ($user->project_id && !$user->hasAnyRole(['admin', 'user'])) {
+                $query->where('project_id', $user->project_id);
+            }
+            
+            return $query;
+        })
+        ->columns([
+            TextColumn::make('project.name')
                 ->label('Wilayah')
-                ->hidden( $user->hasRole('dlh')),
-                    
-                TextColumn::make('current_amount')
-                    ->label('Anggaran Saat Ini')
-                    ->money('IDR', true),
-                    
-                TextColumn::make('updated_at')
-                    ->label('Dibuat Tanggal/Waktu')
-                    ->dateTime(),
+                ->hidden($user->hasRole('dlh')),
+                
+            TextColumn::make('current_amount')
+                ->label('Anggaran Saat Ini')
+                ->money('IDR', true),
+                
+            TextColumn::make('updated_at')
+                ->label('Dibuat Tanggal/Waktu')
+                ->dateTime(),
 
-                TextColumn::make('histories')
-                    ->label('History Perubahan')
-                    ->getStateUsing(function ($record) {
-                        $lastHistory = $record->histories()->latest()->first();
-                        if ($lastHistory) {
-                            $previousAmount = number_format($lastHistory->previous_amount, 0, ',', '.');
-                            $currentAmount = number_format($lastHistory->current_amount, 0, ',', '.');
-                            $changedAt = $lastHistory->changed_at
-                                ? Carbon::parse($lastHistory->changed_at)->format('d-m-Y H:i')
-                                : 'Tanggal tidak tersedia';
+            TextColumn::make('histories')
+                ->label('History Perubahan')
+                ->getStateUsing(function ($record) {
+                    $lastHistory = $record->histories()->latest()->first();
+                    if ($lastHistory) {
+                        $previousAmount = number_format($lastHistory->previous_amount, 0, ',', '.');
+                        $currentAmount = number_format($lastHistory->current_amount, 0, ',', '.');
+                        $changedAt = $lastHistory->changed_at
+                            ? Carbon::parse($lastHistory->changed_at)->format('d-m-Y H:i')
+                            : 'Tanggal tidak tersedia';
 
-                            return "Sebelumnya: IDR {$previousAmount} → Sekarang: IDR {$currentAmount} pada {$changedAt}";
-                        }
-                        return 'Belum ada perubahan';
-                    }),
-            ])
+                        return "Sebelumnya: IDR {$previousAmount} → Sekarang: IDR {$currentAmount} pada {$changedAt}";
+                    }
+                    return 'Belum ada perubahan';
+                }),
+        ])
             ->actions([
                 EditAction::make()->hidden(fn($record) => !static::canEdit($record)),
                 DeleteAction::make()->hidden(fn($record) => !static::canDelete($record)),

@@ -17,7 +17,6 @@ class ListAnggarans extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->hidden(!AnggaranResource::canCreate()),
         ];
     }
 
